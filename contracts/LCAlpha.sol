@@ -71,14 +71,14 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
      * Mint tokens
      */
     function mint(uint256 numberOfTokens) public payable {
-        require(saleIsActive, "Sale must be active to mint Ape");
+        require(saleIsActive, "Sale must be active");
         require(
             numberOfTokens <= MAX_PURCHASE,
-            "Can only mint 20 tokens at a time"
+            "Max purchase exeeded"
         );
         require(
             totalSupply() + numberOfTokens <= MAX_SUPPLY,
-            "Purchase would exceed max supply of Apes"
+            "Purchase would exceed max supply"
         );
         require(
             PRICE * numberOfTokens <= msg.value,
@@ -87,12 +87,9 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
 
         for (uint256 i = 0; i < numberOfTokens; i++) {
             uint256 mintIndex = totalSupply();
-            if (totalSupply() < MAX_SUPPLY) {
-                _safeMint(msg.sender, mintIndex);
-            }
+            _safeMint(msg.sender, mintIndex);
         }
     }
-
 
     /* */
     function supportsInterface(bytes4 interfaceId)
