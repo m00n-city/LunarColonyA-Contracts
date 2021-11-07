@@ -21,8 +21,8 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
     uint256 public constant MAX_PURCHASE = 20;
     uint256 public constant MAX_SUPPLY = 10000;
     uint256 public constant RESERVED_TOKENS = 100;
-    uint256 public constant SALE_DATE = 1636970400;
     string public baseURI;
+    uint256 public saleDate = 1637395200;
     bool public saleIsActive = false;
 
     constructor(string memory name, string memory symbol)
@@ -68,6 +68,13 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
         saleIsActive = !saleIsActive;
     }
 
+    /*
+     * Change sale date timestamp
+     */
+    function setSaleDate(uint256 saleTimestamp) public onlyOwner {
+        saleDate = saleTimestamp;
+    }
+
     /**
      * Mint tokens
      */
@@ -75,7 +82,7 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
         require(saleIsActive, "Sale must be active");
         require(
             numberOfTokens <= MAX_PURCHASE,
-            "Max purchase exeeded"
+            "Max purchase exceeded"
         );
         require(
             totalSupply() + numberOfTokens <= MAX_SUPPLY,
