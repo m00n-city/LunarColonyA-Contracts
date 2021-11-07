@@ -22,6 +22,7 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
     uint256 public constant MAX_SUPPLY = 10000;
     uint256 public constant RESERVED_TOKENS = 100;
     string public baseURI;
+    // 2021-11-20 10:00:00 UTC time
     uint256 public saleDate = 1637395200;
     bool public saleIsActive = false;
 
