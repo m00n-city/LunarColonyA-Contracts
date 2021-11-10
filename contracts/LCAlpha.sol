@@ -16,13 +16,19 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
 contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
+    enum SaleState {
+        Paused,
+        Apollo2022,
+        Open
+    }
+
     string public PROVENANCE;
     uint256 public constant PRICE = 0.08 ether;
     uint256 public constant MAX_PURCHASE = 20;
     uint256 public constant MAX_SUPPLY = 10000;
     uint256 public constant RESERVED_TOKENS = 100;
     string public baseURI;
-    bool public saleIsActive = false;
+    SaleState saleState = SaleState.Paused;
 
     constructor(string memory name, string memory symbol)
         ERC721(name, symbol)
@@ -60,25 +66,29 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
         return baseURI;
     }
 
-    /*
-     * Pause sale if active, make active if paused
+    function saleIsActive() public view returns (bool) {
+        return saleState != SaleState.Paused;
+    }
+
+    /**
+     * @notice Set sale state
      */
-    function flipSaleState() public onlyOwner {
-        saleIsActive = !saleIsActive;
+    function setSaleState(SaleState newSaleState) public onlyOwner {
+        saleState = newSaleState;
     }
 
     /**
      * Mint tokens
      */
     function mint(uint256 numberOfTokens) public payable {
-        require(saleIsActive, "Sale must be active to mint Ape");
+        require(saleIsActive(), "Sale must be active");
         require(
             numberOfTokens <= MAX_PURCHASE,
-            "Can only mint 20 tokens at a time"
+            "Max purchase exceeded"
         );
         require(
             totalSupply() + numberOfTokens <= MAX_SUPPLY,
-            "Purchase would exceed max supply of Apes"
+            "Purchase would exceed max supply"
         );
         require(
             PRICE * numberOfTokens <= msg.value,
@@ -87,12 +97,9 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
 
         for (uint256 i = 0; i < numberOfTokens; i++) {
             uint256 mintIndex = totalSupply();
-            if (totalSupply() < MAX_SUPPLY) {
-                _safeMint(msg.sender, mintIndex);
-            }
+            _safeMint(msg.sender, mintIndex);
         }
     }
-
 
     /* */
     function supportsInterface(bytes4 interfaceId)
