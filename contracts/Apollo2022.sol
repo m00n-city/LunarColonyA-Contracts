@@ -30,7 +30,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     uint256 public immutable releaseStart;
     uint256 public immutable releaseEnd;
     uint256 public immutable duration;
-    IERC20 public immutable eth;
+    IERC20 public immutable weth;
 
 
     string private __baseURI;
@@ -38,14 +38,14 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     mapping(address => uint256) public tokensPerAddr;
     address[] holders;
 
-    constructor(uint256 _releaseStart, uint256 _releaseEnd, IERC20 _eth)
+    constructor(uint256 _releaseStart, uint256 _releaseEnd, IERC20 _weth)
         ERC721("Apollo2022 Boarding Passes", "Apollo2022")
         ERC721Enumerable()
     {
         releaseStart = _releaseStart;
         releaseEnd = _releaseEnd;
         duration = _releaseEnd - _releaseStart;
-        eth = _eth;
+        weth = _weth;
     }
 
     function withdraw() public onlyOwner {
@@ -53,8 +53,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         payable(msg.sender).transfer(balance);
     }
 
-    function withdrawProvidedETH() external onlyOwner {
-        eth.safeTransfer(msg.sender, eth.balanceOf(address(this)));
+    function withdrawWETH() external onlyOwner {
+        weth.safeTransfer(msg.sender, weth.balanceOf(address(this)));
     }
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
@@ -106,7 +106,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         );
         
         uint256 amount = numberOfTokens * buyPrice;
-        eth.safeTransferFrom(address(msg.sender), address(this), amount);
+        weth.safeTransferFrom(address(msg.sender), address(this), amount);
         
         for (uint256 i = 0; i < numberOfTokens; i++){
             _mintNext(to);
