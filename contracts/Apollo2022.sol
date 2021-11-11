@@ -5,8 +5,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -20,7 +18,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
 contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
-    using Strings for uint256;
     using SafeERC20 for IERC20;
 
 
