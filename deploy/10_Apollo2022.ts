@@ -25,7 +25,7 @@ const func: DeployFunction = async function ({ getNamedAccounts, deployments, ne
     return;
   }
 
-  log(`Deploying LunarToken(
+  log(`Deploying Apollo2022(
     releaseStart=${start}, 
     releaseEnd=${end}, 
     weth=${wethAddr}
