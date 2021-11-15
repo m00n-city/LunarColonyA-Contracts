@@ -8,9 +8,10 @@ import {
   ERC20Factory,
   setAutomine,
   mine,
+  hdNodeGen,
 } from "../utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { BigNumber, Contract } from "ethers";
+import { BigNumber, Contract, Wallet } from "ethers";
 
 let deployer: SignerWithAddress,
   alice: SignerWithAddress,
@@ -34,7 +35,7 @@ describe("Apollo2020", function () {
     const mintAmount = parseEther("15000");
     const transferAmount = parseEther("5000");
 
-    await deployments.fixture();
+    // await deployments.fixture();
 
     const contractFatory = await ethers.getContractFactory(
       "Apollo2022",
@@ -61,7 +62,8 @@ describe("Apollo2020", function () {
     setAutomine(true);
   });
 
-  it("available() should calculate correct values", async function () {
+  // We can split this into multiple tests
+  it("should calculate correct values for available tokens", async function () {
     // before release date
     let available = await apollo2022.available();
     expect(available).to.equal(0);
@@ -93,5 +95,106 @@ describe("Apollo2020", function () {
 
     available = await apollo2022.available();
     expect(available).to.equals(10000);
+  });
+
+  describe("#claimToken()", function () {
+    it("should fail to claim tokens when there are 0 available", async function () {
+      // before release date
+      let available = await apollo2022.available();
+      expect(available).to.equal(0);
+
+      await expect(apollo2022.claimTicket(deployer.address)).to.be.revertedWith(
+        "No tickets available"
+      );
+    });
+
+    it("should be able to claim tokens when there are >0 available", async function () {
+      // before release date
+      let available = await apollo2022.available();
+      expect(available).to.equal(0);
+
+      const b1 = await increaseTime(time.days(6));
+
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      const balance = await apollo2022.balanceOf(alice.address);
+      expect(balance).to.equal(1);
+
+      available = await apollo2022.available();
+      expect(available).to.equal(999);
+    });
+
+    it("should be able to claim upto 5 tokens per address", async function () {
+      const b1 = await increaseTime(time.days(6));
+
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      const balance = await apollo2022.balanceOf(alice.address);
+      expect(balance).to.equal(5);
+
+      await expect(
+        apollo2022.connect(alice).claimTicket(alice.address)
+      ).to.be.revertedWith("Max limit per address exceeded");
+
+      let available = await apollo2022.available();
+      expect(available).to.equal(995);
+    });
+  });
+
+  describe("#buyToken()", function () {
+    it("should be able to buy tokens when available >= 0", async function () {
+      const b1 = await increaseTime(time.days(5) + time.seconds(432));
+
+      expect(await apollo2022.available()).to.equal(5);
+
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
+      expect(await apollo2022.available()).to.be.equal(0);
+      await apollo2022.connect(bob).buyTicket(bob.address, 5);
+      expect(await apollo2022.available()).to.equal(0);
+    });
+
+    it("should be able to buy upto 5 tokens", async function () {
+      const b1 = await increaseTime(time.days(5) + time.seconds(432));
+
+      expect(await apollo2022.available()).to.equal(5);
+
+      await apollo2022.connect(alice).buyTicket(alice.address, 4);
+      expect(await apollo2022.available()).to.equal(1);
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      expect(await apollo2022.available()).to.be.equal(0);
+      await expect(
+        apollo2022.connect(alice).claimTicket(alice.address)
+      ).to.be.revertedWith("Max limit per address exceeded");
+      await expect(
+        apollo2022.connect(alice).buyTicket(alice.address, 1)
+      ).to.be.revertedWith("Max limit per address exceeded");
+    });
+
+    it("should delay the release of new tokens", async function () {
+      await increaseTime(time.days(5) + time.seconds(432));
+      expect(await apollo2022.available()).to.equal(5);
+
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
+      await apollo2022.connect(bob).buyTicket(bob.address, 5);
+
+      await increaseTime(time.seconds(432));
+      expect(await apollo2022.available()).to.equal(0);
+
+      await increaseTime(time.seconds(432));
+      expect(await apollo2022.available()).to.equal(5);
+    });
+  });
+
+  describe.skip("Snapshot holders", function () {
+    it("should be able to retreive 10k holders", async function () {
+      const hdNode = ethers.utils.HDNode.fromMnemonic(
+        "test test test test test test test test test test test junk"
+      );
+      for (const [_, newHdNode] of hdNodeGen(hdNode, 0, 10)) {
+        new Wallet(newHdNode.privateKey);
+      }
+    });
   });
 });

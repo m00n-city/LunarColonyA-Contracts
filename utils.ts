@@ -1,5 +1,6 @@
 import { ParamType } from "@ethersproject/abi";
 import { BigNumberish, ContractFactory } from "ethers";
+import { HDNode } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 
 export async function increaseTime(seconds: number) {
@@ -20,7 +21,10 @@ export function setIntervalMining(value: number): Promise<any> {
   return ethers.provider.send("evm_setIntervalMining", [value]);
 }
 
-export function encodeParams(types: readonly (string | ParamType)[], values: readonly any[]): string {
+export function encodeParams(
+  types: readonly (string | ParamType)[],
+  values: readonly any[]
+): string {
   const abi = new ethers.utils.AbiCoder();
   return abi.encode(types, values);
 }
@@ -78,3 +82,17 @@ export const getErc20Factory = async function () {
 
   return new ERC20Factory(contractFactory);
 };
+
+export function* hdNodeGen(
+  hdNode: HDNode,
+  start = 0,
+  end = 1000000,
+  path = "m/44'/60'/0'/0/"
+) {
+  let count = 0;
+  for (let i = start; i < end; i++) {
+    count++;
+    yield <[number, HDNode]>[i, hdNode.derivePath(`${path}${i}`)];
+  }
+  return count;
+}
