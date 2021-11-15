@@ -30,7 +30,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     string private __baseURI;
 
     mapping(address => uint256) public tokensPerAddr;
-    address[] holders;
+    address[] public holders;
 
     constructor(
         uint256 _releaseStart,
@@ -43,9 +43,14 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         weth = _weth;
     }
 
-    function withdraw() public onlyOwner {
-        uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
+    modifier onlyEOA() {
+        require(msg.sender == tx.origin, "must use EOA");
+        _;
+    }
+
+    modifier limitMintCount(address to) {
+        require(tokensPerAddr[to] < maxPerAddr, "Max limit per address exceeded");
+        _;
     }
 
     function withdrawWETH() external onlyOwner {
@@ -77,9 +82,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     /**
      * @notice Claim free ticket
      */
-    function claimTicket(address to) external {
-        require(tokensPerAddr[to] < maxPerAddr, "Max limit per address exceeded");
-
+    function claimTicket(address to) external limitMintCount(to) onlyEOA {
         require(available() > 0, "No tickets available");
 
         _mintNext(to);
@@ -88,8 +91,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     /**
      * @notice Buy ticket
      */
-    function buyTicket(address to, uint256 numberOfTokens) external {
-        require(tokensPerAddr[to] < maxPerAddr, "Max limit per address exceeded");
+    function buyTicket(address to, uint256 numberOfTokens) external limitMintCount(to) onlyEOA {
         require(
             totalSupply() + numberOfTokens <= maxSupply,
             "Mint would exceed max supply of Tickets"
@@ -105,7 +107,13 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
     function _mintNext(address to) internal {
         require(totalSupply() <= maxSupply, "Mint would exceed max supply of Tickets");
+
         uint256 tokenId = totalSupply();
+
+        if (tokensPerAddr[to] == 0) {
+            holders.push(to);
+        }
+        tokensPerAddr[to]++;
 
         _mint(to, tokenId);
     }
@@ -114,6 +122,14 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
         return _baseURI();
+    }
+
+    function holdersLength() external view returns (uint256) {
+        return holders.length;
+    }
+
+    function getHolders() external view returns (address[] memory) {
+        return holders;
     }
 
     /**********************************************/
