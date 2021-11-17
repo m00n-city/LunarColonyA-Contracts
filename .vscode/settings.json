@@ -1,0 +1,22 @@
+{
+  "files.autoSave": "onWindowChange",
+  // "solidity.compileUsingRemoteVersion": "v0.8.10+commit.fc410830",
+  // "solidity.packageDefaultDependenciesContractsDirectory": "",
+  // "solidity.packageDefaultDependenciesDirectory": "node_modules",
+  "solidity.compileUsingLocalVersion": "/home/ljudoed/work/crypto/mw/LunarColonyA-Contracts/soljson-v0.8.10+commit.fc410830.js",
+  "solidity.enabledAsYouTypeCompilationErrorCheck": true,
+  "solidity.validationDelay": 1500,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[typescript]": {
+    "editor.tabSize": 2
+  },
+  "[typescriptreact]": {
+    "editor.tabSize": 2
+  },
+  "mochaExplorer.files": "test/**/*.{j,t}s"
+}
