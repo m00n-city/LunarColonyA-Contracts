@@ -132,6 +132,16 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         return holders;
     }
 
+    function getHolders(uint256 offset, uint256 limit) external view returns (address[] memory) {
+        address[] memory result = new address[](limit);
+        
+        for (uint256 i = 0; i < limit; i++) {
+            result[i] = holders[i+offset];
+        }
+
+        return result;
+    }
+
     /**********************************************/
 
     function supportsInterface(bytes4 interfaceId)

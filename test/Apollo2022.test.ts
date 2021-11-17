@@ -8,10 +8,9 @@ import {
   ERC20Factory,
   setAutomine,
   mine,
-  hdNodeGen,
 } from "../utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { BigNumber, Contract, Wallet } from "ethers";
+import { BigNumber, Contract, utils } from "ethers";
 
 let deployer: SignerWithAddress,
   alice: SignerWithAddress,
@@ -32,13 +31,13 @@ describe("Apollo2020", function () {
   });
 
   beforeEach(async function () {
-    const mintAmount = parseEther("15000");
+    const mintAmount = parseEther("1000000");
     const transferAmount = parseEther("5000");
 
     // await deployments.fixture();
 
     const contractFatory = await ethers.getContractFactory(
-      "Apollo2022",
+      "Apollo2022Mock",
       deployer
     );
 
@@ -187,14 +186,44 @@ describe("Apollo2020", function () {
     });
   });
 
-  describe.skip("Snapshot holders", function () {
-    it("should be able to retreive 10k holders", async function () {
-      const hdNode = ethers.utils.HDNode.fromMnemonic(
-        "test test test test test test test test test test test junk"
-      );
-      for (const [_, newHdNode] of hdNodeGen(hdNode, 0, 10)) {
-        new Wallet(newHdNode.privateKey);
-      }
+  describe("Snapshot holders", function () {
+    describe("#getHolders()", function () {
+      it("should return correct values", async function () {
+        setAutomine(false);
+        let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));
+        genAddress = genAddress.substring(0, 42);
+        const prefix = genAddress.substr(0, 32);
+        const genPart = genAddress.substr(32);
+        const genInt = parseInt(genPart, 16);
+
+        let addresses: string[] = [];
+        for (let i = 1; i <= 10000; i++) {
+          const postfix = (genInt + i).toString(16);
+          addresses.push(`${prefix}${postfix}`);
+          if (i % 100 == 0) {
+            await apollo2022.bulkMint(addresses);
+            await mine();
+            addresses = [];
+          }
+        }
+        await mine();
+        expect(await apollo2022.totalSupply()).to.be.equal(10000);
+
+        const hodlersLength = await apollo2022.holdersLength();
+        let hodlers: string[] = await apollo2022["getHolders()"]();
+        expect(hodlersLength).to.be.equal(10000);
+        expect(hodlers.length).to.be.equal(10000);
+
+        hodlers = await apollo2022["getHolders(uint256,uint256)"](5, 10);
+        expect(hodlers.length).to.be.equal(10);
+
+        const h1: string = await apollo2022.holders(5);
+        const h2: string = await apollo2022.holders(14);
+        expect(hodlers[0]).to.be.equal(h1);
+        expect(hodlers[hodlers.length - 1]).to.be.equal(h2);
+
+        setAutomine(true);
+      });
     });
   });
 });
