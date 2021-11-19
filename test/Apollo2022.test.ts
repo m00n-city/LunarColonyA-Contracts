@@ -205,75 +205,73 @@ describe("Apollo2020", function () {
     });
   });
 
-  describe("Snapshot holders", function () {
-    describe("#getHolders()", function () {
-      it("should return correct values", async function () {
-        setAutomine(false);
-        let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));
-        genAddress = genAddress.substring(0, 42);
-        const prefix = genAddress.substr(0, 32);
-        const genPart = genAddress.substr(32);
-        const genInt = parseInt(genPart, 16);
-        const maxSupply = await apollo2022.maxSupply();
+  describe("#getHolders()", function () {
+    it("should return correct values", async function () {
+      setAutomine(false);
+      let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));
+      genAddress = genAddress.substring(0, 42);
+      const prefix = genAddress.substr(0, 32);
+      const genPart = genAddress.substr(32);
+      const genInt = parseInt(genPart, 16);
+      const maxSupply = await apollo2022.maxSupply();
 
-        let addresses: string[] = [];
-        for (let i = 1; i <= maxSupply; i++) {
-          const postfix = (genInt + i).toString(16);
-          addresses.push(`${prefix}${postfix}`);
-          if (i % 100 == 0) {
-            await apollo2022.bulkMint(addresses);
-            await mine();
-            addresses = [];
-          }
+      let addresses: string[] = [];
+      for (let i = 1; i <= maxSupply; i++) {
+        const postfix = (genInt + i).toString(16);
+        addresses.push(`${prefix}${postfix}`);
+        if (i % 100 == 0) {
+          await apollo2022.bulkMint(addresses);
+          await mine();
+          addresses = [];
         }
-        await mine();
-        expect(await apollo2022.totalSupply()).to.be.equal(maxSupply);
+      }
+      await mine();
+      expect(await apollo2022.totalSupply()).to.be.equal(maxSupply);
 
-        const hodlersLength = await apollo2022.holdersLength();
-        let hodlers: string[] = await apollo2022["getHolders()"]();
-        expect(hodlersLength).to.be.equal(maxSupply);
-        expect(hodlers.length).to.be.equal(maxSupply);
+      const hodlersLength = await apollo2022.holdersLength();
+      let hodlers: string[] = await apollo2022["getHolders()"]();
+      expect(hodlersLength).to.be.equal(maxSupply);
+      expect(hodlers.length).to.be.equal(maxSupply);
 
-        hodlers = await apollo2022["getHolders(uint256,uint256)"](5, 10);
-        expect(hodlers.length).to.be.equal(10);
+      hodlers = await apollo2022["getHolders(uint256,uint256)"](5, 10);
+      expect(hodlers.length).to.be.equal(10);
 
-        const h1: string = await apollo2022.holders(5);
-        const h2: string = await apollo2022.holders(14);
-        expect(hodlers[0]).to.be.equal(h1);
-        expect(hodlers[hodlers.length - 1]).to.be.equal(h2);
+      const h1: string = await apollo2022.holders(5);
+      const h2: string = await apollo2022.holders(14);
+      expect(hodlers[0]).to.be.equal(h1);
+      expect(hodlers[hodlers.length - 1]).to.be.equal(h2);
 
-        setAutomine(true);
-      });
+      setAutomine(true);
     });
+  });
 
-    describe("#ownerOf", function () {
-      it("should be able to get all addresses", async function () {
-        await increaseTime(time.days(6));
+  describe("#ownerOf", function () {
+    it("should be able to get all addresses", async function () {
+      await increaseTime(time.days(6));
 
-        await apollo2022.connect(alice).buyTicket(alice.address, 3);
-        await apollo2022.connect(bob).buyTicket(bob.address, 5);
-        await apollo2022.connect(carol).claimTicket(carol.address);
-        await apollo2022.connect(carol).claimTicket(carol.address);
+      await apollo2022.connect(alice).buyTicket(alice.address, 3);
+      await apollo2022.connect(bob).buyTicket(bob.address, 5);
+      await apollo2022.connect(carol).claimTicket(carol.address);
+      await apollo2022.connect(carol).claimTicket(carol.address);
 
-        const supply = await apollo2022.totalSupply();
-        // iterate over token_ids
-        interface AddressCounts {
-          [index: string]: number;
+      const supply = await apollo2022.totalSupply();
+      // iterate over token_ids
+      interface AddressCounts {
+        [index: string]: number;
+      }
+      let owners: AddressCounts = {};
+      for (let i = 0; i < supply; i++) {
+        const address: string = await apollo2022.ownerOf(i);
+        if (!owners[address]) {
+          owners[address] = 1;
+        } else {
+          owners[address]++;
         }
-        let owners: AddressCounts = {};
-        for (let i = 0; i < supply; i++) {
-          const address: string = await apollo2022.ownerOf(i);
-          if (!owners[address]) {
-            owners[address] = 1;
-          } else {
-            owners[address]++;
-          }
-        }
+      }
 
-        expect(owners[alice.address]).to.be.equal(3);
-        expect(owners[bob.address]).to.be.equal(5);
-        expect(owners[carol.address]).to.be.equal(2);
-      });
+      expect(owners[alice.address]).to.be.equal(3);
+      expect(owners[bob.address]).to.be.equal(5);
+      expect(owners[carol.address]).to.be.equal(2);
     });
   });
 });
