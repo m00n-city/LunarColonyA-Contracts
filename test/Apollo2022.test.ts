@@ -112,7 +112,7 @@ describe("Apollo2020", function () {
       let available = await apollo2022.available();
       expect(available).to.equal(0);
 
-      const b1 = await increaseTime(time.days(6));
+      await increaseTime(time.days(6));
 
       await apollo2022.connect(alice).claimTicket(alice.address);
       const balance = await apollo2022.balanceOf(alice.address);
@@ -123,7 +123,7 @@ describe("Apollo2020", function () {
     });
 
     it("should be able to claim upto 5 tokens per address", async function () {
-      const b1 = await increaseTime(time.days(6));
+      await increaseTime(time.days(6));
 
       await apollo2022.connect(alice).claimTicket(alice.address);
       await apollo2022.connect(alice).claimTicket(alice.address);
@@ -140,11 +140,30 @@ describe("Apollo2020", function () {
       let available = await apollo2022.available();
       expect(available).to.equal(995);
     });
+
+    it("shouldn't be able to claim multiple tokens using a smart contract", async function () {
+      await increaseTime(time.days(6));
+
+      const contractFactory = await ethers.getContractFactory(
+        "ClaimAttacker",
+        deployer
+      );
+
+      const attacker = await contractFactory.deploy(apollo2022.address);
+
+      await expect(attacker.attack1(alice.address, 5)).to.be.revertedWith(
+        "Must use EOA"
+      );
+
+      // On vulnerable contract the attack succeeds
+      await attacker.attack2(alice.address, 5);
+      expect(await apollo2022.balanceOf(alice.address)).to.be.equal(5);
+    });
   });
 
   describe("#buyToken()", function () {
     it("should be able to buy tokens when available >= 0", async function () {
-      const b1 = await increaseTime(time.days(5) + time.seconds(432));
+      await increaseTime(time.days(5) + time.seconds(432));
 
       expect(await apollo2022.available()).to.equal(5);
 
@@ -155,7 +174,7 @@ describe("Apollo2020", function () {
     });
 
     it("should be able to buy upto 5 tokens per address", async function () {
-      const b1 = await increaseTime(time.days(5) + time.seconds(432));
+      await increaseTime(time.days(5) + time.seconds(432));
 
       expect(await apollo2022.available()).to.equal(5);
 
@@ -187,7 +206,7 @@ describe("Apollo2020", function () {
   });
 
   describe("Snapshot holders", function () {
-    describe.skip("#getHolders()", function () {
+    describe("#getHolders()", function () {
       it("should return correct values", async function () {
         setAutomine(false);
         let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));

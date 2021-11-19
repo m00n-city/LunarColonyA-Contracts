@@ -44,7 +44,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     }
 
     modifier onlyEOA() {
-        require(msg.sender == tx.origin, "must use EOA");
+        require(msg.sender == tx.origin, "Must use EOA");
         _;
     }
 
