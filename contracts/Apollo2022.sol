@@ -48,11 +48,6 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         _;
     }
 
-    modifier limitMintCount(address to) {
-        require(tokensPerAddr[to] < maxPerAddr, "Max limit per address exceeded");
-        _;
-    }
-
     function withdrawWETH() external onlyOwner {
         weth.safeTransfer(msg.sender, weth.balanceOf(address(this)));
     }
@@ -82,7 +77,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     /**
      * @notice Claim free ticket
      */
-    function claimTicket(address to) external limitMintCount(to) onlyEOA {
+    function claimTicket(address to) external onlyEOA {
+        require(tokensPerAddr[to] < maxPerAddr, "Max limit per address exceeded");
         require(available() > 0, "No tickets available");
 
         _mintNext(to);
@@ -91,7 +87,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     /**
      * @notice Buy ticket
      */
-    function buyTicket(address to, uint256 numberOfTokens) external limitMintCount(to) onlyEOA {
+    function buyTicket(address to, uint256 numberOfTokens) external onlyEOA {
+        require(tokensPerAddr[to] + numberOfTokens <= maxPerAddr, "Max limit per address exceeded");
         require(
             totalSupply() + numberOfTokens <= maxSupply,
             "Mint would exceed max supply of Tickets"

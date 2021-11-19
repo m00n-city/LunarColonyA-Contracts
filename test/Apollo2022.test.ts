@@ -180,13 +180,16 @@ describe("Apollo2020", function () {
 
       await apollo2022.connect(alice).buyTicket(alice.address, 4);
       expect(await apollo2022.available()).to.equal(1);
+
+      await expect(
+        apollo2022.connect(alice).buyTicket(alice.address, 4)
+      ).to.be.revertedWith("Max limit per address exceeded");
+
       await apollo2022.connect(alice).claimTicket(alice.address);
       expect(await apollo2022.available()).to.be.equal(0);
+
       await expect(
         apollo2022.connect(alice).claimTicket(alice.address)
-      ).to.be.revertedWith("Max limit per address exceeded");
-      await expect(
-        apollo2022.connect(alice).buyTicket(alice.address, 1)
       ).to.be.revertedWith("Max limit per address exceeded");
     });
 
