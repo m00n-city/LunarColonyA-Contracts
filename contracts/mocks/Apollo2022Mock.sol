@@ -6,11 +6,6 @@ pragma solidity ^0.8.0;
 
 import "../Apollo2022.sol";
 
-/**
- * @title Apollo2022 Boarding Passes Contract
- * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
- */
-
 contract Apollo2022Mock is Apollo2022 {
     constructor(
         uint256 _releaseStart,
