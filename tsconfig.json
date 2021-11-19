@@ -7,5 +7,5 @@
     "outDir": "dist"
   },
   "include": ["./scripts", "./test", "./deploy"],
-  "files": ["./hardhat.config.ts"]
+  "files": ["./hardhat.config.ts", "config.ts", "utils.ts"]
 }

@@ -8,9 +8,6 @@ const func: DeployFunction = async function ({
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  // two days in seconds
-  const delay = 60 * 60 * 24 * 2;
-
   await deploy("LCAlpha", {
     from: deployer,
     args: ['Lunar Colony Alpha', 'LCA'],

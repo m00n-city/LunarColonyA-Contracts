@@ -89,7 +89,6 @@ module.exports = {
       // 4: "", // on rinkeby
     },
   },
-  
 
   gasReporter: {
     currency: "USD",
@@ -104,7 +103,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.9",
+        version: "0.8.10",
         settings: {
           optimizer: {
             enabled: true,
@@ -112,5 +111,9 @@ module.exports = {
         },
       },
     ],
+  },
+
+  mocha: {
+    timeout: 70000,
   },
 };
