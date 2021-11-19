@@ -206,7 +206,7 @@ describe("Apollo2020", function () {
   });
 
   describe("#getHolders()", function () {
-    it("should return correct values", async function () {
+    it.skip("should be able to get all holders", async function () {
       setAutomine(false);
       let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));
       genAddress = genAddress.substring(0, 42);
@@ -272,6 +272,26 @@ describe("Apollo2020", function () {
       expect(owners[alice.address]).to.be.equal(3);
       expect(owners[bob.address]).to.be.equal(5);
       expect(owners[carol.address]).to.be.equal(2);
+    });
+  });
+
+  describe("#setBaseURI", function () {
+    it("should be able to set baseUri", async function () {
+      await increaseTime(time.days(6));
+
+      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(bob).claimTicket(bob.address);
+
+      let aliceTokenUri = await apollo2022.tokenURI(0);
+      let bobTokenUri = await apollo2022.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal(bobTokenUri).to.be.equal("");
+
+      await apollo2022.setBaseURI("http://gm.fren");
+      aliceTokenUri = await apollo2022.tokenURI(0);
+      bobTokenUri = await apollo2022.tokenURI(1);
+      expect(aliceTokenUri)
+        .to.be.equal(bobTokenUri)
+        .to.be.equal("http://gm.fren");
     });
   });
 });
