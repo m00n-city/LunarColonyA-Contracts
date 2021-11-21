@@ -33,7 +33,7 @@ const func: DeployFunction = async function ({ getNamedAccounts, deployments, ne
 
   await deploy("Apollo2022", {
     from: deployer,
-    args: [start, end, wethAddr],
+    args: [wethAddr],
     log: true,
   });
 };

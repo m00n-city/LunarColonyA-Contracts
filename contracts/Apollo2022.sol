@@ -22,9 +22,11 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     uint256 public constant maxSupply = 10000;
     uint256 public constant maxPerAddr = 5;
     uint256 public constant buyPrice = 0.01 ether;
-    uint256 public immutable releaseStart;
-    uint256 public immutable releaseEnd;
-    uint256 public immutable duration;
+    uint256 public releaseStart;
+    uint256 public releaseEnd;
+    uint256 public duration;
+    uint256 public curMaxSupply;
+
     IERC20 public immutable weth;
 
     string private __baseURI;
@@ -32,20 +34,32 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     mapping(address => uint256) public tokensPerAddr;
     address[] public holders;
 
-    constructor(
-        uint256 _releaseStart,
-        uint256 _releaseEnd,
-        IERC20 _weth
-    ) ERC721("Apollo2022 Boarding Passes", "Apollo2022") ERC721Enumerable() {
-        releaseStart = _releaseStart;
-        releaseEnd = _releaseEnd;
-        duration = _releaseEnd - _releaseStart;
+    constructor(IERC20 _weth)
+        ERC721("Apollo2022 Boarding Passes", "Apollo2022")
+        ERC721Enumerable()
+    {
         weth = _weth;
     }
 
     modifier onlyEOA() {
         require(msg.sender == tx.origin, "Must use EOA");
         _;
+    }
+
+    function setupRelease(
+        uint256 _releaseStart,
+        uint256 _releaseEnd,
+        uint256 _releaseMaxSupply
+    ) external onlyOwner {
+        require(
+            block.timestamp > releaseEnd && available() == 0,
+            "Previous release is still running"
+        );
+        require(curMaxSupply + _releaseMaxSupply <= maxSupply, "Incorrect releaseMaxSupply value");
+        releaseStart = _releaseStart;
+        releaseEnd = _releaseEnd;
+        duration = _releaseEnd - _releaseStart;
+        curMaxSupply += _releaseMaxSupply;
     }
 
     function withdrawWETH() external onlyOwner {
@@ -62,13 +76,13 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
     function available() public view returns (uint256) {
         uint256 minted = totalSupply();
-        uint256 remaining = maxSupply - minted;
+        uint256 remaining = curMaxSupply - minted;
         if (block.timestamp < releaseStart) {
             return 0;
         } else if (block.timestamp > releaseEnd) {
             return remaining;
         } else {
-            uint256 released = (maxSupply * (block.timestamp - releaseStart)) / duration;
+            uint256 released = (curMaxSupply * (block.timestamp - releaseStart)) / duration;
 
             return (released > minted) ? released - minted : 0;
         }
@@ -103,7 +117,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     }
 
     function _mintNext(address to) internal {
-        require(totalSupply() <= maxSupply, "Mint would exceed max supply of Tickets");
+        require(totalSupply() <= curMaxSupply, "Mint would exceed max supply of Tickets");
 
         uint256 tokenId = totalSupply();
 
@@ -131,9 +145,9 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
     function getHolders(uint256 offset, uint256 limit) external view returns (address[] memory) {
         address[] memory result = new address[](limit);
-        
+
         for (uint256 i = 0; i < limit; i++) {
-            result[i] = holders[i+offset];
+            result[i] = holders[i + offset];
         }
 
         return result;
