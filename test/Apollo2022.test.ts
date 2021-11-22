@@ -19,6 +19,8 @@ let deployer: SignerWithAddress,
 let erc20Factory: ERC20Factory;
 let apollo2022: Contract;
 let weth: Contract;
+let releaseStart: number;
+let releaseEnd: number;
 
 const { parseEther } = ethers.utils;
 const { MaxUint256, Zero } = ethers.constants;
@@ -44,11 +46,8 @@ describe("Apollo2020", function () {
     weth = await erc20Factory.deploy("Wrapped ETH", "WETH", mintAmount);
 
     setAutomine(false);
-    const start = (await blockTimestamp()) + time.days(5) + 1;
-    // START + 5 days
-    const end = start + time.days(10);
 
-    apollo2022 = await contractFatory.deploy(start, end, weth.address);
+    apollo2022 = await contractFatory.deploy(weth.address);
 
     await weth.transfer(alice.address, transferAmount);
     await weth.transfer(bob.address, transferAmount);
@@ -58,7 +57,13 @@ describe("Apollo2020", function () {
     await weth.connect(bob).approve(apollo2022.address, MaxUint256);
     await weth.connect(carol).approve(apollo2022.address, MaxUint256);
     await mine();
-    setAutomine(true);
+    await setAutomine(true);
+
+    // START + 5 days
+    releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+    releaseEnd = releaseStart + time.days(5);
+
+    await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
   });
 
   // We can split this into multiple tests
@@ -90,10 +95,10 @@ describe("Apollo2020", function () {
     expect(available).to.equals(1001);
 
     // outside release period
-    const b4 = await increaseTime(time.days(10));
+    const b4 = await increaseTime(time.days(6));
 
     available = await apollo2022.available();
-    expect(available).to.equals(10000);
+    expect(available).to.equals(5000);
   });
 
   describe("#claimToken()", function () {
