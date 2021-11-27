@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+// import "hardhat/console.sol";
 
 /**
  * @title Apollo2022 Boarding Passes Contract
@@ -19,12 +20,14 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 public constant maxSupply = 10000;
-    uint256 public constant maxPerAddr = 5;
-    uint256 public constant buyPrice = 0.01 ether;
+    uint256 private constant maxSupply = 10000;
+    uint256 private constant maxPerAddr = 5;
+    uint256 private constant buyPrice = 0.01 ether;
     uint256 public releaseStart;
     uint256 public releaseEnd;
-    uint256 public duration;
+    uint256 public releaseDuration;
+    uint256 public releaseMaxSupply;
+    uint256 public releaseMinted;
     uint256 public curMaxSupply;
 
     IERC20 public immutable weth;
@@ -58,8 +61,10 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         require(curMaxSupply + _releaseMaxSupply <= maxSupply, "Incorrect releaseMaxSupply value");
         releaseStart = _releaseStart;
         releaseEnd = _releaseEnd;
-        duration = _releaseEnd - _releaseStart;
+        releaseDuration = _releaseEnd - _releaseStart;
+        releaseMaxSupply = _releaseMaxSupply;
         curMaxSupply += _releaseMaxSupply;
+        releaseMinted = 0;
     }
 
     function withdrawWETH() external onlyOwner {
@@ -75,16 +80,18 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     }
 
     function available() public view returns (uint256) {
-        uint256 minted = totalSupply();
-        uint256 remaining = curMaxSupply - minted;
+        uint256 remaining = releaseMaxSupply - releaseMinted;
         if (block.timestamp < releaseStart) {
+            // console.log("< releaseStart; 0");
             return 0;
         } else if (block.timestamp > releaseEnd) {
+            // console.log("> releaseEnd; remaining");
             return remaining;
         } else {
-            uint256 released = (curMaxSupply * (block.timestamp - releaseStart)) / duration;
+            uint256 released = (releaseMaxSupply * (block.timestamp - releaseStart)) / releaseDuration;
 
-            return (released > minted) ? released - minted : 0;
+            // console.log("released=%s minted=%s", released, releaseMinted);
+            return (released > releaseMinted) ? released - releaseMinted : 0;
         }
     }
 
@@ -104,7 +111,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     function buyTicket(address to, uint256 numberOfTokens) external onlyEOA {
         require(tokensPerAddr[to] + numberOfTokens <= maxPerAddr, "Max limit per address exceeded");
         require(
-            totalSupply() + numberOfTokens <= maxSupply,
+            totalSupply() + numberOfTokens <= curMaxSupply,
             "Mint would exceed max supply of Tickets"
         );
 
@@ -125,6 +132,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
             holders.push(to);
         }
         tokensPerAddr[to]++;
+        releaseMinted++;
 
         _mint(to, tokenId);
     }

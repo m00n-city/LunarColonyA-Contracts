@@ -302,4 +302,66 @@ describe("Apollo2020", function () {
         .to.be.equal("http://gm.fren");
     });
   });
+
+  describe("#setupRelease", function () {
+    it("should not be able to setup new distribution before the end of the previous", async function () {
+      // inside release period
+      await increaseTime(time.days(6));
+
+      let start = await blockTimestamp();
+      let end = start + time.days(1);
+      await expect(
+        apollo2022.setupRelease(start, end, 1000)
+      ).to.be.revertedWith("Previous release is still running");
+
+      // outside release period but there are still available to claim tokens
+      const block = await increaseTime(time.days(6));
+
+      start = block.timestamp;
+      end = block.timestamp + time.days(1);
+      await expect(
+        apollo2022.setupRelease(start, end, 1000)
+      ).to.be.revertedWith("Previous release is still running");
+
+      const available: BigNumber = await apollo2022.available();
+      console.log(available.toString());
+    });
+
+    it("should be able to set new distribution when all tokens are minted", async function () {
+      const contractFactory = await ethers.getContractFactory(
+        "Apollo2022",
+        deployer
+      );
+
+      const apollo2022_ = await contractFactory.deploy(weth.address);
+      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
+
+      let start = await blockTimestamp();
+      let end = start + time.minutes(10);
+
+      await apollo2022_.setupRelease(start, end, 10);
+
+      await increaseTime(time.minutes(5));
+      expect(await apollo2022_.available()).to.be.equal(5);
+
+      await expect(apollo2022_.setupRelease(start, end, 10)).to.be.revertedWith(
+        "Previous release is still running"
+      );
+
+      await apollo2022_.connect(alice).buyTicket(alice.address, 5);
+
+      await increaseTime(time.minutes(5));
+      expect(await apollo2022_.available()).to.be.equal(5);
+
+      await apollo2022_.connect(alice).buyTicket(bob.address, 5);
+      expect(await apollo2022_.available()).to.be.equal(0);
+
+      start = (await blockTimestamp()) - time.minutes(5);
+      end = start + time.minutes(10);
+
+      await apollo2022_.setupRelease(start, end, 10);
+
+      expect(await apollo2022_.available()).to.be.equal(5);
+    });
+  });
 });
