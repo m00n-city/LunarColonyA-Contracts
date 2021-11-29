@@ -20,9 +20,9 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     using SafeERC20 for IERC20;
 
-    uint256 private constant maxSupply = 10000;
-    uint256 private constant maxPerAddr = 5;
-    uint256 private constant buyPrice = 0.01 ether;
+    uint256 public constant maxSupply = 10000;
+    uint256 public constant maxPerAddr = 5;
+    uint256 public constant buyPrice = 0.01 ether;
     uint256 public releaseStart;
     uint256 public releaseEnd;
     uint256 public releaseDuration;
@@ -34,7 +34,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
     string private __baseURI;
 
-    mapping(address => uint256) public tokensPerAddr;
+    mapping(address => uint256) public mintsPerAddr;
     address[] public holders;
 
     constructor(IERC20 _weth)
@@ -99,7 +99,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
      * @notice Claim free ticket
      */
     function claimTicket() external onlyEOA {
-        require(tokensPerAddr[msg.sender] < maxPerAddr, "Max limit per address exceeded");
+        require(mintsPerAddr[msg.sender] < maxPerAddr, "Max limit per address exceeded");
         require(available() > 0, "No tickets available");
 
         _mintNext(msg.sender);
@@ -109,7 +109,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
      * @notice Buy ticket
      */
     function buyTicket(address to, uint256 numberOfTokens) external onlyEOA {
-        require(tokensPerAddr[to] + numberOfTokens <= maxPerAddr, "Max limit per address exceeded");
+        require(mintsPerAddr[to] + numberOfTokens <= maxPerAddr, "Max limit per address exceeded");
         require(
             totalSupply() + numberOfTokens <= curMaxSupply,
             "Mint would exceed max supply of Tickets"
@@ -128,10 +128,10 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
         uint256 tokenId = totalSupply();
 
-        if (tokensPerAddr[to] == 0) {
+        if (mintsPerAddr[to] == 0) {
             holders.push(to);
         }
-        tokensPerAddr[to]++;
+        mintsPerAddr[to]++;
         releaseMinted++;
 
         _mint(to, tokenId);
