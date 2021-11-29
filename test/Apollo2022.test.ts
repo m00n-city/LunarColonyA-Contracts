@@ -66,6 +66,10 @@ describe("Apollo2020", function () {
     await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
   });
 
+  afterEach(async function () {
+    await setAutomine(true);
+  });
+
   // We can split this into multiple tests
   it("should calculate correct values for available tokens", async function () {
     // before release date
@@ -219,7 +223,7 @@ describe("Apollo2020", function () {
       const prefix = genAddress.substr(0, 32);
       const genPart = genAddress.substr(32);
       const genInt = parseInt(genPart, 16);
-      const maxSupply = await apollo2022.maxSupply();
+      const maxSupply = await apollo2022.releaseMaxSupply();
 
       let addresses: string[] = [];
       for (let i = 1; i <= maxSupply; i++) {
@@ -246,8 +250,6 @@ describe("Apollo2020", function () {
       const h2: string = await apollo2022.holders(14);
       expect(hodlers[0]).to.be.equal(h1);
       expect(hodlers[hodlers.length - 1]).to.be.equal(h2);
-
-      setAutomine(true);
     });
   });
 
@@ -323,6 +325,23 @@ describe("Apollo2020", function () {
 
       const available: BigNumber = await apollo2022.available();
       expect(available).to.be.equal(5000);
+    });
+
+    it("should be able to set a distribution initial supply by setting start < now", async function () {
+      const contractFactory = await ethers.getContractFactory(
+        "Apollo2022",
+        deployer
+      );
+
+      const apollo2022_ = await contractFactory.deploy(weth.address);
+      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
+
+      const start = (await blockTimestamp()) - time.minutes(5);
+      const end = start + time.minutes(10);
+
+      await apollo2022_.setupRelease(start, end, 10);
+
+      expect(await apollo2022_.available()).to.be.equal(5);
     });
 
     it("should be able to set new distribution when all tokens are minted", async function () {
