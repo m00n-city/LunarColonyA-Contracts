@@ -17,9 +17,9 @@ contract Apollo2022Mock is Apollo2022 {
         }
     }
 
-    function claimTicketVulnerable(address to) external {
+    function claimTicketVulnerable() external {
         require(available() > 0, "No tickets available");
 
-        _mintNext(to);
+        _mintNext(msg.sender);
     }
 }

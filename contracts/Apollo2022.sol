@@ -71,7 +71,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         weth.safeTransfer(msg.sender, weth.balanceOf(address(this)));
     }
 
-    function setBaseURI(string memory newBaseURI) public onlyOwner {
+    function setBaseURI(string memory newBaseURI) external onlyOwner {
         __baseURI = newBaseURI;
     }
 
@@ -98,11 +98,11 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     /**
      * @notice Claim free ticket
      */
-    function claimTicket(address to) external onlyEOA {
-        require(tokensPerAddr[to] < maxPerAddr, "Max limit per address exceeded");
+    function claimTicket() external onlyEOA {
+        require(tokensPerAddr[msg.sender] < maxPerAddr, "Max limit per address exceeded");
         require(available() > 0, "No tickets available");
 
-        _mintNext(to);
+        _mintNext(msg.sender);
     }
 
     /**

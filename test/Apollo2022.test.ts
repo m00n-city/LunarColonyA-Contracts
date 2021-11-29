@@ -107,7 +107,7 @@ describe("Apollo2020", function () {
       let available = await apollo2022.available();
       expect(available).to.equal(0);
 
-      await expect(apollo2022.claimTicket(deployer.address)).to.be.revertedWith(
+      await expect(apollo2022.claimTicket()).to.be.revertedWith(
         "No tickets available"
       );
     });
@@ -119,7 +119,7 @@ describe("Apollo2020", function () {
 
       await increaseTime(time.days(6));
 
-      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket();
       const balance = await apollo2022.balanceOf(alice.address);
       expect(balance).to.equal(1);
 
@@ -130,17 +130,17 @@ describe("Apollo2020", function () {
     it("should be able to claim upto 5 tokens per address", async function () {
       await increaseTime(time.days(6));
 
-      await apollo2022.connect(alice).claimTicket(alice.address);
-      await apollo2022.connect(alice).claimTicket(alice.address);
-      await apollo2022.connect(alice).claimTicket(alice.address);
-      await apollo2022.connect(alice).claimTicket(alice.address);
-      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket();
+      await apollo2022.connect(alice).claimTicket();
+      await apollo2022.connect(alice).claimTicket();
+      await apollo2022.connect(alice).claimTicket();
+      await apollo2022.connect(alice).claimTicket();
       const balance = await apollo2022.balanceOf(alice.address);
       expect(balance).to.equal(5);
 
-      await expect(
-        apollo2022.connect(alice).claimTicket(alice.address)
-      ).to.be.revertedWith("Max limit per address exceeded");
+      await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
+        "Max limit per address exceeded"
+      );
 
       let available = await apollo2022.available();
       expect(available).to.equal(995);
@@ -156,13 +156,11 @@ describe("Apollo2020", function () {
 
       const attacker = await contractFactory.deploy(apollo2022.address);
 
-      await expect(attacker.attack1(alice.address, 5)).to.be.revertedWith(
-        "Must use EOA"
-      );
+      await expect(attacker.attack1(5)).to.be.revertedWith("Must use EOA");
 
       // On vulnerable contract the attack succeeds
-      await attacker.attack2(alice.address, 5);
-      expect(await apollo2022.balanceOf(alice.address)).to.be.equal(5);
+      await attacker.attack2(5);
+      expect(await apollo2022.balanceOf(attacker.address)).to.be.equal(5);
     });
   });
 
@@ -190,12 +188,12 @@ describe("Apollo2020", function () {
         apollo2022.connect(alice).buyTicket(alice.address, 4)
       ).to.be.revertedWith("Max limit per address exceeded");
 
-      await apollo2022.connect(alice).claimTicket(alice.address);
+      await apollo2022.connect(alice).claimTicket();
       expect(await apollo2022.available()).to.be.equal(0);
 
-      await expect(
-        apollo2022.connect(alice).claimTicket(alice.address)
-      ).to.be.revertedWith("Max limit per address exceeded");
+      await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
+        "Max limit per address exceeded"
+      );
     });
 
     it("should delay the release of new tokens", async function () {
@@ -259,8 +257,8 @@ describe("Apollo2020", function () {
 
       await apollo2022.connect(alice).buyTicket(alice.address, 3);
       await apollo2022.connect(bob).buyTicket(bob.address, 5);
-      await apollo2022.connect(carol).claimTicket(carol.address);
-      await apollo2022.connect(carol).claimTicket(carol.address);
+      await apollo2022.connect(carol).claimTicket();
+      await apollo2022.connect(carol).claimTicket();
 
       const supply = await apollo2022.totalSupply();
       // iterate over token_ids
@@ -287,8 +285,8 @@ describe("Apollo2020", function () {
     it("should be able to set baseUri", async function () {
       await increaseTime(time.days(6));
 
-      await apollo2022.connect(alice).claimTicket(alice.address);
-      await apollo2022.connect(bob).claimTicket(bob.address);
+      await apollo2022.connect(alice).claimTicket();
+      await apollo2022.connect(bob).claimTicket();
 
       let aliceTokenUri = await apollo2022.tokenURI(0);
       let bobTokenUri = await apollo2022.tokenURI(1);
@@ -324,7 +322,7 @@ describe("Apollo2020", function () {
       ).to.be.revertedWith("Previous release is still running");
 
       const available: BigNumber = await apollo2022.available();
-      console.log(available.toString());
+      expect(available).to.be.equal(5000);
     });
 
     it("should be able to set new distribution when all tokens are minted", async function () {
