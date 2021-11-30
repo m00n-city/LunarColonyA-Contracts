@@ -166,6 +166,27 @@ describe("Apollo2020", function () {
       await attacker.attack2(5);
       expect(await apollo2022.balanceOf(attacker.address)).to.be.equal(5);
     });
+
+    it("should fail to claim a new token if we reach the max supply", async function () {
+      const contractFactory = await ethers.getContractFactory(
+        "Apollo2022",
+        deployer
+      );
+
+      const apollo2022_ = await contractFactory.deploy(weth.address);
+      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
+      await weth.connect(bob).approve(apollo2022_.address, MaxUint256);
+
+      const start = (await blockTimestamp()) - time.minutes(10);
+      const end = start + time.minutes(5);
+      await apollo2022_.setupRelease(start, end, 5);
+
+      await apollo2022_.connect(alice).buyTicket(alice.address, 5);
+      //FIXME "Mint would exceed max supply of Tickets"
+      await expect(apollo2022_.connect(bob).claimTicket()).to.be.revertedWith(
+        "No tickets available"
+      );
+    });
   });
 
   describe("#buyToken()", function () {
@@ -212,6 +233,26 @@ describe("Apollo2020", function () {
 
       await increaseTime(time.seconds(432));
       expect(await apollo2022.available()).to.equal(5);
+    });
+
+    it("should fail to buy a new token if we reach the max supply", async function () {
+      const contractFactory = await ethers.getContractFactory(
+        "Apollo2022",
+        deployer
+      );
+
+      const apollo2022_ = await contractFactory.deploy(weth.address);
+      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
+      await weth.connect(bob).approve(apollo2022_.address, MaxUint256);
+
+      const start = (await blockTimestamp()) - time.minutes(10);
+      const end = start + time.minutes(5);
+      await apollo2022_.setupRelease(start, end, 5);
+
+      await apollo2022_.connect(alice).buyTicket(alice.address, 5);
+      await expect(
+        apollo2022_.connect(bob).buyTicket(bob.address, 1)
+      ).to.be.revertedWith("Mint would exceed max supply of Tickets");
     });
   });
 
@@ -334,7 +375,6 @@ describe("Apollo2020", function () {
       );
 
       const apollo2022_ = await contractFactory.deploy(weth.address);
-      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
 
       const start = (await blockTimestamp()) - time.minutes(5);
       const end = start + time.minutes(10);
@@ -379,6 +419,34 @@ describe("Apollo2020", function () {
       await apollo2022_.setupRelease(start, end, 10);
 
       expect(await apollo2022_.available()).to.be.equal(5);
+    });
+
+    it("should fail if we set release supply to exceed the max supply", async function () {
+      const contractFactory = await ethers.getContractFactory(
+        "Apollo2022",
+        deployer
+      );
+
+      const apollo2022_ = await contractFactory.deploy(weth.address);
+
+      const start = (await blockTimestamp()) - time.minutes(5);
+      const end = start + time.minutes(10);
+
+      await expect(
+        apollo2022_.setupRelease(start, end, 10001)
+      ).to.be.revertedWith("Incorrect releaseMaxSupply value");
+    });
+  });
+
+  describe("#withdrawWETH", function () {
+    it("should be able to withdraw ETH", async function () {
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
+
+      await expect(() => apollo2022.withdrawWETH()).to.changeTokenBalances(
+        weth,
+        [deployer, apollo2022],
+        [parseEther("0.05"), parseEther("-0.05")]
+      );
     });
   });
 });
