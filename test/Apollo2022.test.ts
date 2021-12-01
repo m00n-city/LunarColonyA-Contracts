@@ -131,23 +131,24 @@ describe("Apollo2020", function () {
       expect(available).to.equal(999);
     });
 
-    it("should be able to claim upto 5 tokens per address", async function () {
+    it("should be able to claim upto maxClaimsPerAddr tokens", async function () {
       await increaseTime(time.days(6));
 
-      await apollo2022.connect(alice).claimTicket();
-      await apollo2022.connect(alice).claimTicket();
-      await apollo2022.connect(alice).claimTicket();
-      await apollo2022.connect(alice).claimTicket();
-      await apollo2022.connect(alice).claimTicket();
+      const maxClaimsPerAddr: BigNumber = await apollo2022.maxClaimsPerAddr();
+
+      for (let i = 0; i < maxClaimsPerAddr.toNumber(); i++) {
+        await apollo2022.connect(alice).claimTicket();
+      }
+
       const balance = await apollo2022.balanceOf(alice.address);
-      expect(balance).to.equal(5);
+      expect(balance).to.equal(maxClaimsPerAddr);
 
       await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
-        "Max limit per address exceeded"
+        "Max claims per address exceeded"
       );
 
-      let available = await apollo2022.available();
-      expect(available).to.equal(995);
+      let available: BigNumber = await apollo2022.available();
+      expect(available.add(maxClaimsPerAddr)).to.equal(1000);
     });
 
     it("shouldn't be able to claim multiple tokens using a smart contract", async function () {
@@ -211,14 +212,14 @@ describe("Apollo2020", function () {
 
       await expect(
         apollo2022.connect(alice).buyTicket(alice.address, 4)
-      ).to.be.revertedWith("Max limit per address exceeded");
+      ).to.be.revertedWith("Max mints per address exceeded");
 
       await apollo2022.connect(alice).claimTicket();
       expect(await apollo2022.available()).to.be.equal(0);
 
-      await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
-        "Max limit per address exceeded"
-      );
+      await expect(
+        apollo2022.connect(alice).buyTicket(alice.address, 1)
+      ).to.be.revertedWith("Max mints per address exceeded");
     });
 
     it("should delay the release of new tokens", async function () {
@@ -257,7 +258,7 @@ describe("Apollo2020", function () {
   });
 
   describe("#getHolders()", function () {
-    it.skip("should be able to get all holders", async function () {
+    it("should be able to get all holders", async function () {
       setAutomine(false);
       let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));
       genAddress = genAddress.substring(0, 42);
@@ -301,7 +302,7 @@ describe("Apollo2020", function () {
       await apollo2022.connect(alice).buyTicket(alice.address, 3);
       await apollo2022.connect(bob).buyTicket(bob.address, 5);
       await apollo2022.connect(carol).claimTicket();
-      await apollo2022.connect(carol).claimTicket();
+      await apollo2022.connect(carol).buyTicket(carol.address, 1);
 
       const supply = await apollo2022.totalSupply();
       // iterate over token_ids

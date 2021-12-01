@@ -21,7 +21,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     using SafeERC20 for IERC20;
 
     uint256 public constant maxSupply = 10000;
-    uint256 public constant maxPerAddr = 5;
+    uint256 public constant maxMintsPerAddr = 5;
+    uint256 public constant maxClaimsPerAddr = 1;
     uint256 public constant buyPrice = 0.01 ether;
     uint256 public releaseStart;
     uint256 public releaseEnd;
@@ -35,6 +36,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     string private __baseURI;
 
     mapping(address => uint256) public mintsPerAddr;
+    mapping(address => uint256) public claimsPerAddr;
     address[] public holders;
 
     constructor(IERC20 _weth)
@@ -99,9 +101,11 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
      * @notice Claim free ticket
      */
     function claimTicket() external onlyEOA {
-        require(mintsPerAddr[msg.sender] < maxPerAddr, "Max limit per address exceeded");
+        require(claimsPerAddr[msg.sender] < maxClaimsPerAddr, "Max claims per address exceeded");
+        require(mintsPerAddr[msg.sender] < maxMintsPerAddr, "Max mints per address exceeded");
         require(available() > 0, "No tickets available");
 
+        claimsPerAddr[msg.sender]++;
         _mintNext(msg.sender);
     }
 
@@ -109,7 +113,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
      * @notice Buy ticket
      */
     function buyTicket(address to, uint256 numberOfTokens) external onlyEOA {
-        require(mintsPerAddr[to] + numberOfTokens <= maxPerAddr, "Max limit per address exceeded");
+        require(mintsPerAddr[to] + numberOfTokens <= maxMintsPerAddr, "Max mints per address exceeded");
         require(
             totalSupply() + numberOfTokens <= curMaxSupply,
             "Mint would exceed max supply of Tickets"
