@@ -19,8 +19,6 @@ let deployer: SignerWithAddress,
 let erc20Factory: ERC20Factory;
 let apollo2022: Contract;
 let weth: Contract;
-let releaseStart: number;
-let releaseEnd: number;
 
 const { parseEther } = ethers.utils;
 const { MaxUint256, Zero } = ethers.constants;
@@ -58,12 +56,6 @@ describe("Apollo2020", function () {
     await weth.connect(carol).approve(apollo2022.address, MaxUint256);
     await mine();
     await setAutomine(true);
-
-    // START + 5 days
-    releaseStart = (await blockTimestamp()) + time.days(5) + 1;
-    releaseEnd = releaseStart + time.days(5);
-
-    await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
   });
 
   afterEach(async function () {
@@ -72,6 +64,10 @@ describe("Apollo2020", function () {
 
   // We can split this into multiple tests
   it("should calculate correct values for available tokens", async function () {
+    const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+    const releaseEnd = releaseStart + time.days(5);
+    await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
     // before release date
     let available = await apollo2022.available();
     expect(available).to.equal(0);
@@ -107,6 +103,10 @@ describe("Apollo2020", function () {
 
   describe("#claimToken()", function () {
     it("should fail to claim tokens when there are 0 available", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       // before release date
       let available = await apollo2022.available();
       expect(available).to.equal(0);
@@ -117,6 +117,10 @@ describe("Apollo2020", function () {
     });
 
     it("should be able to claim tokens when there are >0 available", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       // before release date
       let available = await apollo2022.available();
       expect(available).to.equal(0);
@@ -132,6 +136,10 @@ describe("Apollo2020", function () {
     });
 
     it("should be able to claim upto maxClaimsPerAddr tokens", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(6));
 
       const maxClaimsPerAddr: BigNumber = await apollo2022.maxClaimsPerAddr();
@@ -152,6 +160,10 @@ describe("Apollo2020", function () {
     });
 
     it("shouldn't be able to claim multiple tokens using a smart contract", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(6));
 
       const contractFactory = await ethers.getContractFactory(
@@ -169,22 +181,13 @@ describe("Apollo2020", function () {
     });
 
     it("should fail to claim a new token if we reach the max supply", async function () {
-      const contractFactory = await ethers.getContractFactory(
-        "Apollo2022",
-        deployer
-      );
-
-      const apollo2022_ = await contractFactory.deploy(weth.address);
-      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
-      await weth.connect(bob).approve(apollo2022_.address, MaxUint256);
-
       const start = (await blockTimestamp()) - time.minutes(10);
       const end = start + time.minutes(5);
-      await apollo2022_.setupRelease(start, end, 5);
+      await apollo2022.setupRelease(start, end, 5);
 
-      await apollo2022_.connect(alice).buyTicket(alice.address, 5);
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
       //FIXME "Mint would exceed max supply of Tickets"
-      await expect(apollo2022_.connect(bob).claimTicket()).to.be.revertedWith(
+      await expect(apollo2022.connect(bob).claimTicket()).to.be.revertedWith(
         "No tickets available"
       );
     });
@@ -192,6 +195,10 @@ describe("Apollo2020", function () {
 
   describe("#buyToken()", function () {
     it("should be able to buy tokens when available >= 0", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(5) + time.seconds(432));
 
       expect(await apollo2022.available()).to.equal(5);
@@ -203,6 +210,10 @@ describe("Apollo2020", function () {
     });
 
     it("should be able to buy upto 5 tokens per address", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(5) + time.seconds(432));
 
       expect(await apollo2022.available()).to.equal(5);
@@ -223,6 +234,10 @@ describe("Apollo2020", function () {
     });
 
     it("should delay the release of new tokens", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(5) + time.seconds(432));
       expect(await apollo2022.available()).to.equal(5);
 
@@ -237,28 +252,23 @@ describe("Apollo2020", function () {
     });
 
     it("should fail to buy a new token if we reach the max supply", async function () {
-      const contractFactory = await ethers.getContractFactory(
-        "Apollo2022",
-        deployer
-      );
-
-      const apollo2022_ = await contractFactory.deploy(weth.address);
-      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
-      await weth.connect(bob).approve(apollo2022_.address, MaxUint256);
-
       const start = (await blockTimestamp()) - time.minutes(10);
       const end = start + time.minutes(5);
-      await apollo2022_.setupRelease(start, end, 5);
+      await apollo2022.setupRelease(start, end, 5);
 
-      await apollo2022_.connect(alice).buyTicket(alice.address, 5);
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
       await expect(
-        apollo2022_.connect(bob).buyTicket(bob.address, 1)
+        apollo2022.connect(bob).buyTicket(bob.address, 1)
       ).to.be.revertedWith("Mint would exceed max supply of Tickets");
     });
   });
 
   describe("#getHolders()", function () {
-    it("should be able to get all holders", async function () {
+    it.skip("should be able to get all holders", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       setAutomine(false);
       let genAddress = utils.keccak256(utils.toUtf8Bytes("gm my fren"));
       genAddress = genAddress.substring(0, 42);
@@ -297,6 +307,10 @@ describe("Apollo2020", function () {
 
   describe("#ownerOf", function () {
     it("should be able to get all addresses", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(6));
 
       await apollo2022.connect(alice).buyTicket(alice.address, 3);
@@ -327,6 +341,10 @@ describe("Apollo2020", function () {
 
   describe("#setBaseURI", function () {
     it("should be able to set baseUri", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await increaseTime(time.days(6));
 
       await apollo2022.connect(alice).claimTicket();
@@ -347,6 +365,10 @@ describe("Apollo2020", function () {
 
   describe("#setupRelease", function () {
     it("should not be able to setup new distribution before the end of the previous", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       // inside release period
       await increaseTime(time.days(6));
 
@@ -370,77 +392,57 @@ describe("Apollo2020", function () {
     });
 
     it("should be able to set a distribution initial supply by setting start < now", async function () {
-      const contractFactory = await ethers.getContractFactory(
-        "Apollo2022",
-        deployer
-      );
-
-      const apollo2022_ = await contractFactory.deploy(weth.address);
-
       const start = (await blockTimestamp()) - time.minutes(5);
       const end = start + time.minutes(10);
+      await apollo2022.setupRelease(start, end, 10);
 
-      await apollo2022_.setupRelease(start, end, 10);
-
-      expect(await apollo2022_.available()).to.be.equal(5);
+      expect(await apollo2022.available()).to.be.equal(5);
     });
 
     it("should be able to set new distribution when all tokens are minted", async function () {
-      const contractFactory = await ethers.getContractFactory(
-        "Apollo2022",
-        deployer
-      );
-
-      const apollo2022_ = await contractFactory.deploy(weth.address);
-      await weth.connect(alice).approve(apollo2022_.address, MaxUint256);
-
       let start = await blockTimestamp();
       let end = start + time.minutes(10);
-
-      await apollo2022_.setupRelease(start, end, 10);
+      await apollo2022.setupRelease(start, end, 10);
 
       await increaseTime(time.minutes(5));
-      expect(await apollo2022_.available()).to.be.equal(5);
+      expect(await apollo2022.available()).to.be.equal(5);
 
-      await expect(apollo2022_.setupRelease(start, end, 10)).to.be.revertedWith(
+      await expect(apollo2022.setupRelease(start, end, 10)).to.be.revertedWith(
         "Previous release is still running"
       );
 
-      await apollo2022_.connect(alice).buyTicket(alice.address, 5);
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
 
       await increaseTime(time.minutes(5));
-      expect(await apollo2022_.available()).to.be.equal(5);
+      expect(await apollo2022.available()).to.be.equal(5);
 
-      await apollo2022_.connect(alice).buyTicket(bob.address, 5);
-      expect(await apollo2022_.available()).to.be.equal(0);
+      await apollo2022.connect(alice).buyTicket(bob.address, 5);
+      expect(await apollo2022.available()).to.be.equal(0);
 
       start = (await blockTimestamp()) - time.minutes(5);
       end = start + time.minutes(10);
 
-      await apollo2022_.setupRelease(start, end, 10);
+      await apollo2022.setupRelease(start, end, 10);
 
-      expect(await apollo2022_.available()).to.be.equal(5);
+      expect(await apollo2022.available()).to.be.equal(5);
     });
 
     it("should fail if we set release supply to exceed the max supply", async function () {
-      const contractFactory = await ethers.getContractFactory(
-        "Apollo2022",
-        deployer
-      );
-
-      const apollo2022_ = await contractFactory.deploy(weth.address);
-
       const start = (await blockTimestamp()) - time.minutes(5);
       const end = start + time.minutes(10);
 
       await expect(
-        apollo2022_.setupRelease(start, end, 10001)
+        apollo2022.setupRelease(start, end, 10001)
       ).to.be.revertedWith("Incorrect releaseMaxSupply value");
     });
   });
 
   describe("#withdrawWETH", function () {
     it("should be able to withdraw ETH", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
       await apollo2022.connect(alice).buyTicket(alice.address, 5);
 
       await expect(() => apollo2022.withdrawWETH()).to.changeTokenBalances(
@@ -455,6 +457,39 @@ describe("Apollo2020", function () {
     it("should be able to reserve tickets", async function () {
       await apollo2022.reserveTickets(carol.address, 10);
       expect(await apollo2022.balanceOf(carol.address)).to.be.equal(10);
+    });
+
+    it("should not break the release calculation", async function () {
+      await apollo2022.reserveTickets(carol.address, 10);
+
+      let start = await blockTimestamp();
+      let end = start + time.minutes(15);
+      await apollo2022.setupRelease(start, end, 15);
+
+      await increaseTime(time.minutes(5));
+      expect(await apollo2022.available()).to.equal(5);
+
+      await apollo2022.connect(alice).buyTicket(alice.address, 5);
+      await apollo2022.connect(bob).buyTicket(bob.address, 5);
+
+      await increaseTime(time.minutes(5));
+      expect(await apollo2022.available()).to.equal(0);
+
+      await increaseTime(time.minutes(5));
+      expect(await apollo2022.available()).to.equal(5);
+
+      await apollo2022.connect(carol).buyTicket(carol.address, 5);
+
+      await apollo2022.reserveTickets(carol.address, 10);
+
+      start = await blockTimestamp();
+      end = start + time.minutes(15);
+      await apollo2022.setupRelease(start, end, 15);
+
+      await increaseTime(time.minutes(5));
+      expect(await apollo2022.available()).to.equal(5);
+
+      expect(await apollo2022.balanceOf(carol.address)).to.be.equal(25);
     });
   });
 });
