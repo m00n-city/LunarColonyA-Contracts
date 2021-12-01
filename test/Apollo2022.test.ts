@@ -450,4 +450,11 @@ describe("Apollo2020", function () {
       );
     });
   });
+
+  describe("#reserveTickets", function () {
+    it("should be able to reserve tickets", async function () {
+      await apollo2022.reserveTickets(carol.address, 10);
+      expect(await apollo2022.balanceOf(carol.address)).to.be.equal(10);
+    });
+  });
 });
