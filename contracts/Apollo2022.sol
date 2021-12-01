@@ -111,7 +111,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         require(available() > 0, "No tickets available");
 
         claimsPerAddr[msg.sender]++;
-        _mintNext(msg.sender);
+        _releaseMint(msg.sender);
     }
 
     /**
@@ -131,7 +131,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         weth.safeTransferFrom(address(msg.sender), address(this), amount);
 
         for (uint256 i = 0; i < numberOfTokens; i++) {
-            _mintNext(to);
+            _releaseMint(to);
         }
     }
 
@@ -152,15 +152,19 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         }
     }
 
-    function _mintNext(address to) internal {
-        require(totalSupply() <= maxSupply, "Mint would exceed max supply of Tickets");
-        uint256 tokenId = totalSupply();
-
+    function _releaseMint(address to) internal {
         if (mintsPerAddr[to] == 0) {
             holders.push(to);
         }
         mintsPerAddr[to]++;
         releaseMinted++;
+
+        _mintNext(to);
+    }
+
+    function _mintNext(address to) internal {
+        require(totalSupply() <= maxSupply, "Mint would exceed max supply of Tickets");
+        uint256 tokenId = totalSupply();
 
         _mint(to, tokenId);
     }
