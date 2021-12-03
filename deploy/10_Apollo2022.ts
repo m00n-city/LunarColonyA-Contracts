@@ -4,19 +4,16 @@ import { time } from "../utils";
 import { config } from "../config";
 import { getErc20Factory } from "../utils";
 import { parseEther } from "ethers/lib/utils";
+import { hrtime } from "process";
 
 const func: DeployFunction = async function ({
   getNamedAccounts,
   deployments,
   network,
-  ethers,
+  run,
 }: HardhatRuntimeEnvironment) {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
-
-  const start = time.now() + time.hours(1);
-  const end = start + time.days(3);
-  const releaseAmount = 500;
 
   let wethAddr: string = config.network[network.name]?.WETH?.address;
 
@@ -45,14 +42,13 @@ const func: DeployFunction = async function ({
     log: true,
   });
 
-  const apollo2022 = await ethers.getContract("Apollo2022");
+  if (network.tags.local) {
+    const start = time.now() + time.hours(1);
+    const end = start + time.days(3);
+    const releaseAmount = 500;
 
-  log(`Deploying Apollo2022(
-    start=${start},
-    end=${end},
-    releaseMaxSupply=${releaseAmount}
-  )`);
-  await apollo2022.setupRelease(start, end, releaseAmount);
+    await run("setupRelease", { start, end, amount: releaseAmount });
+  }
 };
 
 export default func;

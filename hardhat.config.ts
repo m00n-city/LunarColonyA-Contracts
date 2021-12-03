@@ -7,7 +7,7 @@ import "hardhat-gas-reporter";
 import "hardhat-deploy";
 import "solidity-coverage";
 
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -18,6 +18,21 @@ task("accounts", "Prints the list of accounts", async (args, hre) => {
     console.log(account.address);
   }
 });
+
+task("setupRelease", "Setups a new LCA Boarding Passes release")
+  .addParam("start", "Release start", undefined, types.int)
+  .addParam("end", "Release end", undefined, types.int)
+  .addParam("amount", "Release amount", undefined, types.int)
+  .setAction(async function ({ start, end, amount }, { ethers }) {
+    const apollo2022 = await ethers.getContract("Apollo2022");
+
+    console.log(`Apollo2022.setupRelease(
+      start=${start},
+      end=${end},
+      releaseMaxSupply=${amount}
+    )`);
+    await apollo2022.setupRelease(start, end, amount);
+  });
 
 const accounts = {
   mnemonic: process.env.MNEMONIC,
