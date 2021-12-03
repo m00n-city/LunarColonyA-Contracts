@@ -11,15 +11,15 @@ contract ClaimAttacker {
         apollo = _apollo;
     }
 
-    function attack1(address to, uint256 amount) external {
+    function attack1(uint256 amount) external {
         for (uint256 i = 0; i < amount; i++) {
-            apollo.claimTicket(to);
+            apollo.claimTicket();
         }
     }
 
-    function attack2(address to, uint256 amount) external {
+    function attack2(uint256 amount) external {
         for (uint256 i = 0; i < amount; i++) {
-            apollo.claimTicketVulnerable(to);
+            apollo.claimTicketVulnerable();
         }
     }
 }

@@ -30,8 +30,8 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
     string public baseURI;
     SaleState saleState = SaleState.Paused;
 
-    constructor(string memory name, string memory symbol)
-        ERC721(name, symbol)
+    constructor()
+        ERC721('Lunar Colony Alpha', 'LCA')
         ERC721Enumerable()
     {}
 

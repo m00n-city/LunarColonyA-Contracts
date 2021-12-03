@@ -8,10 +8,8 @@ import "../Apollo2022.sol";
 
 contract Apollo2022Mock is Apollo2022 {
     constructor(
-        uint256 _releaseStart,
-        uint256 _releaseEnd,
         IERC20 _weth
-    ) Apollo2022(_releaseStart, _releaseEnd, _weth) {}
+    ) Apollo2022(_weth) {}
 
     function bulkMint(address[] memory accounts) public onlyOwner {
         for (uint256 account = 0; account < accounts.length; account++) {
@@ -19,9 +17,9 @@ contract Apollo2022Mock is Apollo2022 {
         }
     }
 
-    function claimTicketVulnerable(address to) external {
+    function claimTicketVulnerable() external {
         require(available() > 0, "No tickets available");
 
-        _mintNext(to);
+        _mintNext(msg.sender);
     }
 }

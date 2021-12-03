@@ -5,18 +5,28 @@ import { config } from "../config";
 import { getErc20Factory } from "../utils";
 import { parseEther } from "ethers/lib/utils";
 
-const func: DeployFunction = async function ({ getNamedAccounts, deployments, network }: HardhatRuntimeEnvironment) {
+const func: DeployFunction = async function ({
+  getNamedAccounts,
+  deployments,
+  network,
+  ethers,
+}: HardhatRuntimeEnvironment) {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  let start = time.now() + time.hours(1);
-  const end = start + time.days(21);
+  const start = time.now() + time.hours(1);
+  const end = start + time.days(3);
+  const releaseAmount = 500;
 
   let wethAddr: string = config.network[network.name]?.WETH?.address;
 
   if (network.tags.local) {
     const erc20Factory = await getErc20Factory();
-    const WETH = await erc20Factory.deploy("Wrapped ETH", "WETH", parseEther("10000"));
+    const WETH = await erc20Factory.deploy(
+      "Wrapped ETH",
+      "WETH",
+      parseEther("10000")
+    );
     wethAddr = WETH.address;
   }
 
@@ -26,16 +36,23 @@ const func: DeployFunction = async function ({ getNamedAccounts, deployments, ne
   }
 
   log(`Deploying Apollo2022(
-    releaseStart=${start}, 
-    releaseEnd=${end}, 
     weth=${wethAddr}
   )`);
 
   await deploy("Apollo2022", {
     from: deployer,
-    args: [start, end, wethAddr],
+    args: [wethAddr],
     log: true,
   });
+
+  const apollo2022 = await ethers.getContract("Apollo2022");
+
+  log(`Deploying Apollo2022(
+    start=${start},
+    end=${end},
+    releaseMaxSupply=${releaseAmount}
+  )`);
+  await apollo2022.setupRelease(start, end, releaseAmount);
 };
 
 export default func;

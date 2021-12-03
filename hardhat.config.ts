@@ -76,6 +76,18 @@ module.exports = {
       accounts,
       chainId: 42,
     },
+    matic: {
+      url: "https://rpc-mainnet.maticvigil.com",
+      accounts,
+      chainId: 137,
+      tags: ["l2"],
+    },
+    "matic-mumbai": {
+      url: "https://rpc-mumbai.maticvigil.com/",
+      accounts,
+      chainId: 80001,
+      tags: ["staging", "l2"],
+    },
   },
 
   namedAccounts: {
@@ -107,6 +119,7 @@ module.exports = {
         settings: {
           optimizer: {
             enabled: true,
+            runs: 200,
           },
         },
       },

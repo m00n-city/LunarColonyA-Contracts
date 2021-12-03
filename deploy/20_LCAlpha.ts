@@ -10,7 +10,7 @@ const func: DeployFunction = async function ({
 
   await deploy("LCAlpha", {
     from: deployer,
-    args: ['Lunar Colony Alpha', 'LCA'],
+    args: [],
     log: true,
   });
 };
