@@ -1,9 +1,9 @@
 import hre from "hardhat";
 import { time } from "../utils";
 
-const start = time.now() + time.hours(1);
-const end = start + time.days(3);
-const releaseAmount = 500;
+const start = time.now();
+const end = start + time.hours(5);
+const releaseAmount = 100;
 
 async function main() {
   await hre.run("setupRelease", { start, end, amount: releaseAmount });

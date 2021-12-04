@@ -42,6 +42,8 @@ const func: DeployFunction = async function ({
     log: true,
   });
 
+  await run("setBaseURI", { uri: config.apollo.baseURI });
+
   if (network.tags.local) {
     const start = time.now() + time.hours(1);
     const end = start + time.days(3);

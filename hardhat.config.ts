@@ -31,7 +31,32 @@ task("setupRelease", "Setups a new LCA Boarding Passes release")
       end=${end},
       releaseMaxSupply=${amount}
     )`);
+
     await apollo2022.setupRelease(start, end, amount);
+  });
+
+task("setBaseURI", "Sets new base uri")
+  .addParam("uri", "New URI")
+  .setAction(async function ({ uri }, { ethers }) {
+    const apollo2022 = await ethers.getContract("Apollo2022");
+
+    console.log(`Apollo2022.setBaseURI(
+      uri=${uri}
+    )`);
+
+    await apollo2022.setBaseURI(uri);
+  });
+
+task("reserveTickets", "Reserves tickets for giveaways")
+  .addParam("address", "Receiver address")
+  .addParam("amount", "Mint amount", undefined, types.int)
+  .setAction(async function ({ address, amount }, { ethers }) {
+    const apollo2022 = await ethers.getContract("Apollo2022");
+    console.log(`Apollo2022.reserveTickets(
+      address=${address},
+      amount=${amount}
+    )`);
+    await apollo2022.reserveTickets(address, amount);
   });
 
 const accounts = {
