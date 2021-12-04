@@ -25,7 +25,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     uint256 public constant maxMintsPerAddr = 5;
     uint256 public constant maxClaimsPerAddr = 1;
     uint256 public constant buyPrice = 0.01 ether;
-    uint256 private reserveMaxAmount = 500;
+    uint256 public reserveMaxAmount = 500;
     uint256 public reserveAmount;
     uint256 public releaseStart;
     uint256 public releaseEnd;
@@ -107,7 +107,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     function claimTicket() external onlyEOA {
         require(claimsPerAddr[msg.sender] < maxClaimsPerAddr, "Max claims per address exceeded");
         require(mintsPerAddr[msg.sender] < maxMintsPerAddr, "Max mints per address exceeded");
-        require(totalSupply() <= curMaxSupply, "Mint would exceed max supply of Tickets");
+        require(totalSupply() < curMaxSupply, "Mint would exceed max supply of Tickets");
         require(available() > 0, "No tickets available");
 
         claimsPerAddr[msg.sender]++;
@@ -142,7 +142,7 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         );
         require(
             reserveAmount + numberOfTokens <= reserveMaxAmount,
-            "Mint would exeed max allowed amount"
+            "Mint would exeed max allowed reserve amount"
         );
         curMaxSupply += numberOfTokens;
         reserveAmount += numberOfTokens;

@@ -102,6 +102,12 @@ describe("Apollo2020", function () {
   });
 
   describe("#claimToken()", function () {
+    it("should fail to claim tokens when the release has not started", async function () {
+      await expect(apollo2022.claimTicket()).to.be.revertedWith(
+        "Mint would exceed max supply of Tickets"
+      );
+    });
+
     it("should fail to claim tokens when there are 0 available", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -159,6 +165,25 @@ describe("Apollo2020", function () {
       expect(available.add(maxClaimsPerAddr)).to.equal(1000);
     });
 
+    it("shouldn't be able to claim more than maxMintsPerAddr tokens", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
+      await increaseTime(time.days(6));
+
+      const maxMintsPerAddr: BigNumber = await apollo2022.maxMintsPerAddr();
+
+      await apollo2022.connect(alice).buyTicket(alice.address, maxMintsPerAddr);
+
+      const balance = await apollo2022.balanceOf(alice.address);
+      expect(balance).to.equal(maxMintsPerAddr);
+
+      await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
+        "Max mints per address exceeded"
+      );
+    });
+
     it("shouldn't be able to claim multiple tokens using a smart contract", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -188,7 +213,7 @@ describe("Apollo2020", function () {
       await apollo2022.connect(alice).buyTicket(alice.address, 5);
       //FIXME "Mint would exceed max supply of Tickets"
       await expect(apollo2022.connect(bob).claimTicket()).to.be.revertedWith(
-        "No tickets available"
+        "Mint would exceed max supply of Tickets"
       );
     });
   });
@@ -339,6 +364,13 @@ describe("Apollo2020", function () {
     });
   });
 
+  describe("#tokenURI", function () {
+    it("should failt to get URI of nonexistent token", async function () {
+      await expect(apollo2022.tokenURI(0)).to.be.revertedWith(
+        "ERC721Metadata: URI query for nonexistent token"
+      );
+    });
+  });
   describe("#setBaseURI", function () {
     it("should be able to set baseUri", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
@@ -490,6 +522,20 @@ describe("Apollo2020", function () {
       expect(await apollo2022.available()).to.equal(5);
 
       expect(await apollo2022.balanceOf(carol.address)).to.be.equal(25);
+    });
+
+    it("should fail to reserve more thickets than maxSupply", async function () {
+      const maxSupply = await apollo2022.maxSupply();
+      await expect(
+        apollo2022.reserveTickets(carol.address, maxSupply.add(1))
+      ).to.be.revertedWith("Mint would exceed max supply of Tickets");
+    });
+
+    it("should fail to reserve more thickets than reserveMaxAmount", async function () {
+      const reserveMaxAmount = await apollo2022.reserveMaxAmount();
+      await expect(
+        apollo2022.reserveTickets(carol.address, reserveMaxAmount.add(1))
+      ).to.be.revertedWith("Mint would exeed max allowed reserve amount");
     });
   });
 });
