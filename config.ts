@@ -21,6 +21,6 @@ export const config: IConfig = {
     },
   },
   apollo: {
-    baseURI: "ipfs://QmfUQoYDawcsDh6bWEiMPvPh4v2Hhm8acqAA78KVt5qJtw",
+    baseURI: "ipfs://QmeSUfNKCu6bnPYF3MiFfSCcbaUoxcau8Bw3aBToAKFxZv",
   },
 };

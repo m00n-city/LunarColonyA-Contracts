@@ -108,6 +108,16 @@ describe("Apollo2020", function () {
       );
     });
 
+    it("should emit correct Event", async function () {
+      const releaseStart = (await blockTimestamp()) - time.days(1);
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
+      await expect(apollo2022.connect(alice).claimTicket())
+        .to.emit(apollo2022, "ClaimTicket")
+        .withArgs(alice.address);
+    });
+
     it("should fail to claim tokens when there are 0 available", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -219,6 +229,17 @@ describe("Apollo2020", function () {
   });
 
   describe("#buyToken()", function () {
+    it("should emit correct Event", async function () {
+      const releaseStart = await blockTimestamp();
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
+      const amount = 2;
+      await expect(apollo2022.connect(alice).buyTicket(bob.address, amount))
+        .to.emit(apollo2022, "BuyTicket")
+        .withArgs(bob.address, alice.address, amount);
+    });
+
     it("should be able to buy tokens when available >= 0", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -372,6 +393,13 @@ describe("Apollo2020", function () {
     });
   });
   describe("#setBaseURI", function () {
+    it("should emit correct Event", async function () {
+      const uri = "http://gm.fren";
+      await expect(apollo2022.setBaseURI(uri))
+        .to.emit(apollo2022, "SetBaseURI")
+        .withArgs(uri);
+    });
+
     it("should be able to set baseUri", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -396,6 +424,15 @@ describe("Apollo2020", function () {
   });
 
   describe("#setupRelease", function () {
+    it("should emit correct Event", async function () {
+      const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
+      const releaseEnd = releaseStart + time.days(5);
+      const supply = 5000;
+      await expect(apollo2022.setupRelease(releaseStart, releaseEnd, supply))
+        .to.emit(apollo2022, "SetupRelease")
+        .withArgs(releaseStart, releaseEnd, supply);
+    });
+
     it("should not be able to setup new distribution before the end of the previous", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -489,6 +526,17 @@ describe("Apollo2020", function () {
     it("should be able to reserve tickets", async function () {
       await apollo2022.reserveTickets(carol.address, 10);
       expect(await apollo2022.balanceOf(carol.address)).to.be.equal(10);
+    });
+
+    it("should emit correct Event", async function () {
+      const releaseStart = await blockTimestamp();
+      const releaseEnd = releaseStart + time.days(5);
+      await apollo2022.setupRelease(releaseStart, releaseEnd, 5000);
+
+      const amount = 2;
+      await expect(apollo2022.reserveTickets(alice.address, amount))
+        .to.emit(apollo2022, "ReserveTickets")
+        .withArgs(alice.address, amount);
     });
 
     it("should not break the release calculation", async function () {

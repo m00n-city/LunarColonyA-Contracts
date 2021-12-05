@@ -21,6 +21,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     using SafeERC20 for IERC20;
 
+    event ClaimTicket(address indexed account);
+    event BuyTicket(address indexed account, address indexed sender, uint256 amount);
+    event SetupRelease(uint256 start, uint256 end, uint256 supply);
+    event SetBaseURI(string uri);
+    event ReserveTickets(address indexed account, uint256 amount);
+
     uint256 public constant maxSupply = 10000;
     uint256 public constant maxMintsPerAddr = 5;
     uint256 public constant maxClaimsPerAddr = 1;
@@ -70,6 +76,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         releaseMaxSupply = _releaseMaxSupply;
         curMaxSupply += _releaseMaxSupply;
         releaseMinted = 0;
+
+        emit SetupRelease(_releaseStart, _releaseEnd, _releaseMaxSupply);
     }
 
     function withdrawWETH() external onlyOwner {
@@ -78,6 +86,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
     function setBaseURI(string memory newBaseURI) external onlyOwner {
         __baseURI = newBaseURI;
+
+        emit SetBaseURI(newBaseURI);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -112,6 +122,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
         claimsPerAddr[msg.sender]++;
         _releaseMint(msg.sender);
+
+        emit ClaimTicket(msg.sender);
     }
 
     /**
@@ -133,6 +145,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         for (uint256 i = 0; i < numberOfTokens; i++) {
             _releaseMint(to);
         }
+
+        emit BuyTicket(to, msg.sender, numberOfTokens);
     }
 
     function reserveTickets(address to, uint256 numberOfTokens) external onlyOwner {
@@ -150,6 +164,8 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         for (uint256 i = 0; i < numberOfTokens; i++) {
             _mintNext(to);
         }
+
+        emit ReserveTickets(to, numberOfTokens);
     }
 
     function _releaseMint(address to) internal {
