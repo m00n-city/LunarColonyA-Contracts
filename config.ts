@@ -14,8 +14,13 @@ export const config: IConfig = {
         address: "0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa",
       },
     },
+    rinkeby: {
+      WETH: {
+        address: "0xc778417E063141139Fce010982780140Aa0cD5Ab",
+      },
+    },
   },
   apollo: {
-    baseURI: "ipfs://QmTFdg4WmLyidFmftZ48gD5PtKzVJrAg2kG3WpNas6CZp9",
+    baseURI: "ipfs://QmfUQoYDawcsDh6bWEiMPvPh4v2Hhm8acqAA78KVt5qJtw",
   },
 };
