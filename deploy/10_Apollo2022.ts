@@ -38,11 +38,9 @@ const func: DeployFunction = async function ({
 
   await deploy("Apollo2022", {
     from: deployer,
-    args: [wethAddr],
+    args: [config.apollo.baseURI, wethAddr],
     log: true,
   });
-
-  await run("setBaseURI", { uri: config.apollo.baseURI });
 
   if (network.tags.local) {
     const start = time.now() + time.hours(1);
