@@ -1,14 +1,11 @@
-/**
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
 import "./AbstractApollo2022.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-// import "hardhat/console.sol";
 
 /**
  * @title Apollo2022 Boarding Passes Contract
@@ -20,7 +17,6 @@ contract Apollo2022 is AbstractApollo2022 {
     event ClaimTicket(address indexed account);
     event BuyTicket(address indexed account, address indexed sender, uint256 amount);
     event SetupRelease(uint256 start, uint256 end, uint256 supply);
-    event SetBaseURI(string uri);
     event ReserveTickets(address indexed account, uint256 amount);
 
     uint256 public constant maxSupply = 10000;
@@ -41,12 +37,12 @@ contract Apollo2022 is AbstractApollo2022 {
     mapping(address => uint256) public mintsPerAddr;
     mapping(address => uint256) public claimsPerAddr;
 
-    address[] public holders;
-
     constructor(string memory _uri, IERC20 _weth)
         ERC1155(_uri) ERC1155Supply()
     {
         weth = _weth;
+        name = "LCA Boarding Passes";
+        symbol = "LCAPASS";
     }
 
     modifier onlyEOA() {
@@ -81,16 +77,13 @@ contract Apollo2022 is AbstractApollo2022 {
     function available() public view returns (uint256) {
         uint256 remaining = releaseMaxSupply - releaseMinted;
         if (block.timestamp < releaseStart) {
-            // console.log("< releaseStart; 0");
             return 0;
         } else if (block.timestamp > releaseEnd) {
-            // console.log("> releaseEnd; remaining");
             return remaining;
         } else {
             uint256 released = (releaseMaxSupply * (block.timestamp - releaseStart)) /
                 releaseDuration;
 
-            // console.log("released=%s minted=%s", released, releaseMinted);
             return (released > releaseMinted) ? released - releaseMinted : 0;
         }
     }
