@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title Apollo2022 Boarding Passes Contract
- * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
+ * @dev Extends ERC1155 Token Standard basic implementation
  */
 contract Apollo2022 is AbstractApollo2022 {
     using SafeERC20 for IERC20;
@@ -88,9 +88,6 @@ contract Apollo2022 is AbstractApollo2022 {
         }
     }
 
-    /**
-     * @notice Claim free ticket
-     */
     function claimTicket() external onlyEOA {
         require(claimsPerAddr[msg.sender] < maxClaimsPerAddr, "Max claims per address exceeded");
         require(mintsPerAddr[msg.sender] < maxMintsPerAddr, "Max mints per address exceeded");
@@ -103,9 +100,6 @@ contract Apollo2022 is AbstractApollo2022 {
         emit ClaimTicket(msg.sender);
     }
 
-    /**
-     * @notice Buy ticket
-     */
     function buyTicket(address to, uint256 numberOfTokens) external onlyEOA {
         require(
             mintsPerAddr[to] + numberOfTokens <= maxMintsPerAddr,

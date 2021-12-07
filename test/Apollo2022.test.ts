@@ -542,6 +542,7 @@ describe("Apollo2020", function () {
       expect(await apollo2022.available()).to.equal(5);
 
       await apollo2022.connect(alice).buyTicket(alice.address, 5);
+      await apollo2022.reserveTickets(carol.address, 5);
       await apollo2022.connect(bob).buyTicket(bob.address, 5);
 
       await increaseTime(time.minutes(5));
@@ -561,7 +562,7 @@ describe("Apollo2020", function () {
       await increaseTime(time.minutes(5));
       expect(await apollo2022.available()).to.equal(5);
 
-      expect(await apollo2022.ticketBalanceOf(carol.address)).to.be.equal(25);
+      expect(await apollo2022.ticketBalanceOf(carol.address)).to.be.equal(30);
     });
 
     it("should fail to reserve more thickets than maxSupply", async function () {
