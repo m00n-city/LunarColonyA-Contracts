@@ -1,30 +1,22 @@
-/**
- * SPDX-License-Identifier: GPL-3.0-or-later
- */
+// SPDX-License-Identifier: MIT
+
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "./AbstractApollo2022.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
-// import "hardhat/console.sol";
 
 /**
  * @title Apollo2022 Boarding Passes Contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
+contract Apollo2022 is AbstractApollo2022 {
     using SafeERC20 for IERC20;
 
     event ClaimTicket(address indexed account);
     event BuyTicket(address indexed account, address indexed sender, uint256 amount);
     event SetupRelease(uint256 start, uint256 end, uint256 supply);
-    event SetBaseURI(string uri);
     event ReserveTickets(address indexed account, uint256 amount);
 
     uint256 public constant maxSupply = 10000;
@@ -42,17 +34,15 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
 
     IERC20 public immutable weth;
 
-    string private __baseURI;
-
     mapping(address => uint256) public mintsPerAddr;
     mapping(address => uint256) public claimsPerAddr;
-    address[] public holders;
 
-    constructor(IERC20 _weth)
-        ERC721("Apollo2022 Boarding Passes", "Apollo2022")
-        ERC721Enumerable()
+    constructor(string memory _uri, IERC20 _weth)
+        ERC1155(_uri) ERC1155Supply()
     {
         weth = _weth;
+        name = "LCA Boarding Passes";
+        symbol = "LCAPASS";
     }
 
     modifier onlyEOA() {
@@ -84,29 +74,16 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         weth.safeTransfer(msg.sender, weth.balanceOf(address(this)));
     }
 
-    function setBaseURI(string memory newBaseURI) external onlyOwner {
-        __baseURI = newBaseURI;
-
-        emit SetBaseURI(newBaseURI);
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return __baseURI;
-    }
-
     function available() public view returns (uint256) {
         uint256 remaining = releaseMaxSupply - releaseMinted;
         if (block.timestamp < releaseStart) {
-            // console.log("< releaseStart; 0");
             return 0;
         } else if (block.timestamp > releaseEnd) {
-            // console.log("> releaseEnd; remaining");
             return remaining;
         } else {
             uint256 released = (releaseMaxSupply * (block.timestamp - releaseStart)) /
                 releaseDuration;
 
-            // console.log("released=%s minted=%s", released, releaseMinted);
             return (released > releaseMinted) ? released - releaseMinted : 0;
         }
     }
@@ -117,11 +94,11 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
     function claimTicket() external onlyEOA {
         require(claimsPerAddr[msg.sender] < maxClaimsPerAddr, "Max claims per address exceeded");
         require(mintsPerAddr[msg.sender] < maxMintsPerAddr, "Max mints per address exceeded");
-        require(totalSupply() < curMaxSupply, "Mint would exceed max supply of Tickets");
+        require(totalTicketSupply() < curMaxSupply, "Mint would exceed max supply of Tickets");
         require(available() > 0, "No tickets available");
 
         claimsPerAddr[msg.sender]++;
-        _releaseMint(msg.sender);
+        _releaseMint(msg.sender, 1);
 
         emit ClaimTicket(msg.sender);
     }
@@ -135,16 +112,14 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
             "Max mints per address exceeded"
         );
         require(
-            totalSupply() + numberOfTokens <= curMaxSupply,
+            totalTicketSupply() + numberOfTokens <= curMaxSupply,
             "Mint would exceed max supply of Tickets"
         );
 
         uint256 amount = numberOfTokens * buyPrice;
         weth.safeTransferFrom(address(msg.sender), address(this), amount);
 
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _releaseMint(to);
-        }
+        _releaseMint(to, numberOfTokens);
 
         emit BuyTicket(to, msg.sender, numberOfTokens);
     }
@@ -161,53 +136,15 @@ contract Apollo2022 is ERC721, ERC721Enumerable, ERC721Burnable, Ownable {
         curMaxSupply += numberOfTokens;
         reserveAmount += numberOfTokens;
 
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            _mintNext(to);
-        }
+        _mintTickets(to, numberOfTokens);
 
         emit ReserveTickets(to, numberOfTokens);
     }
 
-    function _releaseMint(address to) internal {
-        if (mintsPerAddr[to] == 0) {
-            holders.push(to);
-        }
-        mintsPerAddr[to]++;
-        releaseMinted++;
+    function _releaseMint(address to, uint256 amount) internal {
+        mintsPerAddr[to] += amount;
+        releaseMinted += amount;
 
-        _mintNext(to);
-    }
-
-    function _mintNext(address to) internal {
-        require(totalSupply() <= maxSupply, "Mint would exceed max supply of Tickets");
-        uint256 tokenId = totalSupply();
-
-        _mint(to, tokenId);
-    }
-
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
-        return _baseURI();
-    }
-
-    /**********************************************/
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC721, ERC721Enumerable)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual override(ERC721, ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+        _mintTickets(to, amount);
     }
 }

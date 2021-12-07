@@ -45,7 +45,7 @@ describe("Apollo2020", function () {
 
     setAutomine(false);
 
-    apollo2022 = await contractFatory.deploy(weth.address);
+    apollo2022 = await contractFatory.deploy("", weth.address);
 
     await weth.transfer(alice.address, transferAmount);
     await weth.transfer(bob.address, transferAmount);
@@ -144,7 +144,7 @@ describe("Apollo2020", function () {
       await increaseTime(time.days(6));
 
       await apollo2022.connect(alice).claimTicket();
-      const balance = await apollo2022.balanceOf(alice.address);
+      const balance = await apollo2022.ticketBalanceOf(alice.address);
       expect(balance).to.equal(1);
 
       available = await apollo2022.available();
@@ -164,7 +164,7 @@ describe("Apollo2020", function () {
         await apollo2022.connect(alice).claimTicket();
       }
 
-      const balance = await apollo2022.balanceOf(alice.address);
+      const balance = await apollo2022.ticketBalanceOf(alice.address);
       expect(balance).to.equal(maxClaimsPerAddr);
 
       await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
@@ -186,7 +186,7 @@ describe("Apollo2020", function () {
 
       await apollo2022.connect(alice).buyTicket(alice.address, maxMintsPerAddr);
 
-      const balance = await apollo2022.balanceOf(alice.address);
+      const balance = await apollo2022.ticketBalanceOf(alice.address);
       expect(balance).to.equal(maxMintsPerAddr);
 
       await expect(apollo2022.connect(alice).claimTicket()).to.be.revertedWith(
@@ -211,8 +211,11 @@ describe("Apollo2020", function () {
       await expect(attacker.attack1(5)).to.be.revertedWith("Must use EOA");
 
       // On vulnerable contract the attack succeeds
-      await attacker.attack2(5);
-      expect(await apollo2022.balanceOf(attacker.address)).to.be.equal(5);
+      const amount = await apollo2022.maxClaimsPerAddr();
+      await attacker.attack2(amount);
+      expect(await apollo2022.ticketBalanceOf(attacker.address)).to.be.equal(
+        amount
+      );
     });
 
     it("should fail to claim a new token if we reach the max supply", async function () {
@@ -351,7 +354,7 @@ describe("Apollo2020", function () {
     });
   });
 
-  describe("#ownerOf", function () {
+  describe("#ticketBalanceOf", function () {
     it("should be able to get all addresses", async function () {
       const releaseStart = (await blockTimestamp()) + time.days(5) + 1;
       const releaseEnd = releaseStart + time.days(5);
@@ -364,40 +367,28 @@ describe("Apollo2020", function () {
       await apollo2022.connect(carol).claimTicket();
       await apollo2022.connect(carol).buyTicket(carol.address, 1);
 
-      const supply = await apollo2022.totalSupply();
-      // iterate over token_ids
-      interface AddressCounts {
-        [index: string]: number;
-      }
-      let owners: AddressCounts = {};
-      for (let i = 0; i < supply; i++) {
-        const address: string = await apollo2022.ownerOf(i);
-        if (!owners[address]) {
-          owners[address] = 1;
-        } else {
-          owners[address]++;
-        }
-      }
-
-      expect(owners[alice.address]).to.be.equal(3);
-      expect(owners[bob.address]).to.be.equal(5);
-      expect(owners[carol.address]).to.be.equal(2);
+      expect(await apollo2022.ticketBalanceOf(alice.address)).to.be.equal(3);
+      expect(await apollo2022.ticketBalanceOf(bob.address)).to.be.equal(5);
+      expect(await apollo2022.ticketBalanceOf(carol.address)).to.be.equal(2);
+      expect(await apollo2022.totalTicketSupply()).to.be.equal(3 + 5 + 2);
     });
   });
 
-  describe("#tokenURI", function () {
+  describe("#uri", function () {
     it("should failt to get URI of nonexistent token", async function () {
-      await expect(apollo2022.tokenURI(0)).to.be.revertedWith(
+      await expect(apollo2022.uri(69)).to.be.revertedWith(
         "ERC721Metadata: URI query for nonexistent token"
       );
     });
   });
-  describe("#setBaseURI", function () {
+
+  describe("#setURI", function () {
     it("should emit correct Event", async function () {
       const uri = "http://gm.fren";
-      await expect(apollo2022.setBaseURI(uri))
-        .to.emit(apollo2022, "SetBaseURI")
-        .withArgs(uri);
+      const tokenId = await apollo2022.tokenID();
+      await expect(apollo2022.setURI(uri))
+        .to.emit(apollo2022, "URI")
+        .withArgs(uri, tokenId);
     });
 
     it("should be able to set baseUri", async function () {
@@ -410,13 +401,14 @@ describe("Apollo2020", function () {
       await apollo2022.connect(alice).claimTicket();
       await apollo2022.connect(bob).claimTicket();
 
-      let aliceTokenUri = await apollo2022.tokenURI(0);
-      let bobTokenUri = await apollo2022.tokenURI(1);
+      const tokenId = await apollo2022.tokenID();
+      let aliceTokenUri = await apollo2022.uri(tokenId);
+      let bobTokenUri = await apollo2022.uri(tokenId);
       expect(aliceTokenUri).to.be.equal(bobTokenUri).to.be.equal("");
 
-      await apollo2022.setBaseURI("http://gm.fren");
-      aliceTokenUri = await apollo2022.tokenURI(0);
-      bobTokenUri = await apollo2022.tokenURI(1);
+      await apollo2022.setURI("http://gm.fren");
+      aliceTokenUri = await apollo2022.uri(tokenId);
+      bobTokenUri = await apollo2022.uri(tokenId);
       expect(aliceTokenUri)
         .to.be.equal(bobTokenUri)
         .to.be.equal("http://gm.fren");
@@ -525,7 +517,7 @@ describe("Apollo2020", function () {
   describe("#reserveTickets", function () {
     it("should be able to reserve tickets", async function () {
       await apollo2022.reserveTickets(carol.address, 10);
-      expect(await apollo2022.balanceOf(carol.address)).to.be.equal(10);
+      expect(await apollo2022.ticketBalanceOf(carol.address)).to.be.equal(10);
     });
 
     it("should emit correct Event", async function () {
@@ -569,7 +561,7 @@ describe("Apollo2020", function () {
       await increaseTime(time.minutes(5));
       expect(await apollo2022.available()).to.equal(5);
 
-      expect(await apollo2022.balanceOf(carol.address)).to.be.equal(25);
+      expect(await apollo2022.ticketBalanceOf(carol.address)).to.be.equal(25);
     });
 
     it("should fail to reserve more thickets than maxSupply", async function () {

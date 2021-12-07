@@ -38,16 +38,14 @@ const func: DeployFunction = async function ({
 
   await deploy("Apollo2022", {
     from: deployer,
-    args: [wethAddr],
+    args: [config.apollo.baseURI, wethAddr],
     log: true,
   });
 
-  await run("setBaseURI", { uri: config.apollo.baseURI });
-
   if (network.tags.local) {
-    const start = time.now() + time.hours(1);
-    const end = start + time.days(3);
-    const releaseAmount = 500;
+    const start = time.now() + time.minutes(2);
+    const end = start + time.minutes(30);
+    const releaseAmount = 10;
 
     await run("setupRelease", { start, end, amount: releaseAmount });
   }
