@@ -92,6 +92,10 @@ module.exports = {
       live: false,
       tags: ["local"],
       chainId: 1337,
+      mining: {
+        auto: false,
+        interval: [1000, 3000],
+      },
     },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
@@ -135,11 +139,11 @@ module.exports = {
       default: 0, // here this will by default take the first account as deployer
       // 1: 0, // similarly on mainnet it will take the first account as deployer. Note though that depending on how hardhat network are configured, the account 0 on one network can be different than on another
     },
-    dao: {
-      default: 1, // here this will by default take the second account as team (so in the test this will be a different account than the deployer)
-      // 1: "", // on the mainnet the team could be a multi sig
-      // 4: "", // on rinkeby
-    },
+    // dao: {
+    //   default: 1, // here this will by default take the second account as team (so in the test this will be a different account than the deployer)
+    //   // 1: "", // on the mainnet the team could be a multi sig
+    //   // 4: "", // on rinkeby
+    // },
   },
 
   gasReporter: {
