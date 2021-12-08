@@ -48,6 +48,7 @@ const func: DeployFunction = async function ({
     const releaseAmount = 10;
 
     await run("setupRelease", { start, end, amount: releaseAmount });
+    await run("sendERC20", { address: wethAddr, amount: "100" });
   }
 };
 

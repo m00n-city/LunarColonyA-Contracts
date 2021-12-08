@@ -59,6 +59,22 @@ task("reserveTickets", "Reserves tickets for giveaways")
     await apollo2022.reserveTickets(address, amount);
   });
 
+task("sendERC20", "Sends ERC20 token to all unnamed accounts")
+  .addParam("address", "Token address")
+  .addOptionalParam("amount", "Transfer amount", "100")
+  .setAction(async function (
+    { address, amount },
+    { ethers, getUnnamedAccounts }
+  ) {
+    const erc20 = await ethers.getContractAt("ERC20Mock", address);
+
+    const unnamedAccs = await getUnnamedAccounts();
+    for (const account of unnamedAccs) {
+      console.log(`Sending ${amount} to ${account}`);
+      await erc20.transfer(account, ethers.utils.parseEther(amount));
+    }
+  });
+
 const accounts = {
   mnemonic: process.env.MNEMONIC,
 };
