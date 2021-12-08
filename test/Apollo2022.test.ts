@@ -579,4 +579,44 @@ describe("Apollo2020", function () {
       ).to.be.revertedWith("Mint would exeed max allowed reserve amount");
     });
   });
+
+  describe("#setBuyPrice", function () {
+    it("should be able set a new buyPrice from owner's account", async function () {
+      const curPrice = await apollo2022.buyPrice();
+      const newPrice = curPrice.div(2);
+
+      await apollo2022.setBuyPrice(newPrice);
+      expect(await apollo2022.buyPrice()).to.be.equal(newPrice);
+
+      await apollo2022.setBuyPrice(newPrice.mul(2));
+      expect(await apollo2022.buyPrice()).to.be.equal(curPrice);
+    });
+
+    it("should fail to change buy price from not owner's account", async function () {
+      await expect(
+        apollo2022.connect(alice).setBuyPrice(10000)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should spend correct amount of WETH when the price is changed", async function () {
+      const curPrice = await apollo2022.buyPrice();
+
+      let start = await blockTimestamp();
+      let end = start + time.minutes(15);
+      await apollo2022.setupRelease(start, end, 15);
+      await increaseTime(time.minutes(5));
+
+      const amount = 2;
+      await expect(() =>
+        apollo2022.connect(bob).buyTicket(bob.address, amount)
+      ).to.changeTokenBalance(weth, bob, Zero.sub(curPrice.mul(amount)));
+
+      const newPrice = curPrice.div(2);
+      await apollo2022.setBuyPrice(newPrice);
+
+      await expect(() =>
+        apollo2022.connect(bob).buyTicket(bob.address, amount)
+      ).to.changeTokenBalance(weth, bob, Zero.sub(newPrice.mul(amount)));
+    });
+  });
 });

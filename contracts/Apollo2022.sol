@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 
-
 pragma solidity ^0.8.0;
 
 import "./AbstractApollo2022.sol";
@@ -23,7 +22,7 @@ contract Apollo2022 is AbstractApollo2022 {
     /// @dev buys + claims <= maxMintsPerAddr
     uint256 public constant maxMintsPerAddr = 5;
     uint256 public constant maxClaimsPerAddr = 1;
-    uint256 public constant buyPrice = 0.01 ether;
+    uint256 public buyPrice = 0.01 ether;
     uint256 public reserveMaxAmount = 1000;
     uint256 public reserveAmount;
     uint256 public releaseStart;
@@ -38,9 +37,7 @@ contract Apollo2022 is AbstractApollo2022 {
     mapping(address => uint256) public mintsPerAddr;
     mapping(address => uint256) public claimsPerAddr;
 
-    constructor(string memory _uri, IERC20 _weth)
-        ERC1155(_uri) ERC1155Supply()
-    {
+    constructor(string memory _uri, IERC20 _weth) ERC1155(_uri) ERC1155Supply() {
         weth = _weth;
         name = "LCA Boarding Passes";
         symbol = "LCAPASS";
@@ -69,6 +66,12 @@ contract Apollo2022 is AbstractApollo2022 {
         releaseMinted = 0;
 
         emit SetupRelease(_releaseStart, _releaseEnd, _releaseMaxSupply);
+    }
+
+    function setBuyPrice(
+        uint256 _buyPrice
+    ) external onlyOwner {
+        buyPrice = _buyPrice;
     }
 
     function withdrawWETH() external onlyOwner {
