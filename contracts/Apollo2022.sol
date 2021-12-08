@@ -20,10 +20,11 @@ contract Apollo2022 is AbstractApollo2022 {
     event ReserveTickets(address indexed account, uint256 amount);
 
     uint256 public constant maxSupply = 10000;
+    /// @dev buys + claims <= maxMintsPerAddr
     uint256 public constant maxMintsPerAddr = 5;
     uint256 public constant maxClaimsPerAddr = 1;
     uint256 public constant buyPrice = 0.01 ether;
-    uint256 public reserveMaxAmount = 500;
+    uint256 public reserveMaxAmount = 1000;
     uint256 public reserveAmount;
     uint256 public releaseStart;
     uint256 public releaseEnd;
