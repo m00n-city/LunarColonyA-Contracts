@@ -35,16 +35,16 @@ task("setupRelease", "Setups a new LCA Boarding Passes release")
     await apollo2022.setupRelease(start, end, amount);
   });
 
-task("setBaseURI", "Sets new base uri")
+task("setURI", "Sets new base uri")
   .addParam("uri", "New URI")
   .setAction(async function ({ uri }, { ethers }) {
     const apollo2022 = await ethers.getContract("Apollo2022");
 
-    console.log(`Apollo2022.setBaseURI(
+    console.log(`Apollo2022.setURI(
       uri=${uri}
     )`);
 
-    await apollo2022.setBaseURI(uri);
+    await apollo2022.setURI(uri);
   });
 
 task("reserveTickets", "Reserves tickets for giveaways")
@@ -137,7 +137,7 @@ module.exports = {
       chainId: 42,
     },
     matic: {
-      url: "https://rpc-mainnet.maticvigil.com",
+      url: `https://rpc-mainnet.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
       accounts,
       chainId: 137,
       tags: ["l2"],
