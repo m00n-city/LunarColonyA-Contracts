@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { time } from "../utils";
 
-const start = time.now();
+const start = time.now() + time.minutes(2);
 const end = start + time.minutes(30);
 const releaseAmount = 10;
 
