@@ -9,7 +9,7 @@ const program = new Command();
 program.version("0.0.1");
 program.option(
   "-a, --contract-address <name>",
-  "*Beep* if this string is found in the newly created contract (empty string for all)",
+  "Contract address",
   "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
 );
 

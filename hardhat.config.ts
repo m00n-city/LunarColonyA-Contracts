@@ -88,7 +88,7 @@ const accounts = {
 module.exports = {
   networks: {
     mainnet: {
-      url: "https://cloudflare-eth.com",
+      url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
       accounts,
       chainId: 1,
       tags: ["production"],
@@ -143,7 +143,7 @@ module.exports = {
       tags: ["l2"],
     },
     "matic-mumbai": {
-      url: "https://rpc-mumbai.maticvigil.com/",
+      url: `https://rpc-mumbai.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
       accounts,
       chainId: 80001,
       tags: ["staging", "l2"],
