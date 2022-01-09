@@ -4,7 +4,6 @@ import { time } from "../utils";
 import { config } from "../config";
 import { getErc20Factory } from "../utils";
 import { parseEther } from "ethers/lib/utils";
-import { hrtime } from "process";
 
 const func: DeployFunction = async function ({
   getNamedAccounts,

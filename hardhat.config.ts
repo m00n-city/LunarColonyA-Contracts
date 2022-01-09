@@ -32,7 +32,11 @@ task("setupRelease", "Setups a new LCA Boarding Passes release")
       releaseMaxSupply=${amount}
     )`);
 
-    await apollo2022.setupRelease(start, end, amount);
+    const options = {};
+    const tx = await apollo2022.setupRelease(start, end, amount, options);
+    console.log(tx);
+
+    await tx.wait();
   });
 
 task("setURI", "Sets new base uri")
@@ -56,7 +60,10 @@ task("reserveTickets", "Reserves tickets for giveaways")
       address=${address},
       amount=${amount}
     )`);
-    await apollo2022.reserveTickets(address, amount);
+    const tx = await apollo2022.reserveTickets(address, amount);
+    console.log(tx);
+
+    await tx.wait();
   });
 
 task("sendERC20", "Sends ERC20 token to all unnamed accounts")

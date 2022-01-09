@@ -70,7 +70,7 @@ async function main() {
         console.log("gas price", utils.formatUnits(gasPrice, "gwei"));
 
         const options = { gasPrice };
-        await apollo2022.safeTransferFrom(
+        const tx = await apollo2022.safeTransferFrom(
           deployer,
           address,
           0,
@@ -79,7 +79,7 @@ async function main() {
           options
         );
 
-        console.log("sending", deployer, "->", address, amount);
+        console.log("sending", deployer, "->", address, amount, tx.hash);
         state[address] = true;
       } else {
         console.log("skipping", address, amount);
