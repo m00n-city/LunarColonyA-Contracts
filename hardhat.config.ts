@@ -32,7 +32,12 @@ task("setupRelease", "Setups a new LCA Boarding Passes release")
       releaseMaxSupply=${amount}
     )`);
 
-    const options = {};
+    let gasPrice = await apollo2022.provider.getGasPrice();
+    console.log("gas price", ethers.utils.formatUnits(gasPrice, "gwei"));
+    gasPrice = gasPrice.mul(2);
+    console.log("gas price * 2", ethers.utils.formatUnits(gasPrice, "gwei"));
+
+    const options = { gasPrice };
     const tx = await apollo2022.setupRelease(start, end, amount, options);
     console.log(tx);
 
