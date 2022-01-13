@@ -23,19 +23,20 @@ const state = JSON.parse(fs.readFileSync(opts.stateFile).toString());
 console.log(state);
 
 async function main() {
-  const apollo2022 = await ethers.getContract("Apollo2022");
-  const { deployer } = await hre.getNamedAccounts();
+  const { deployer } = await ethers.getNamedSigners();
+  let apollo2022 = await ethers.getContract("Apollo2022");
+  apollo2022 = apollo2022.connect(deployer);
 
-  const ensProvider = ethers.providers.getDefaultProvider("homestead", {
-    etherscan: process.env.ETHERSCAN_API_KEY,
-    alchemy: process.env.ALCHEMY_API_KEY,
-    infura: process.env.INFURA_API_KEY,
-  });
+  // const ensProvider = ethers.providers.getDefaultProvider("homestead", {
+  //   etherscan: process.env.ETHERSCAN_API_KEY,
+  //   alchemy: process.env.ALCHEMY_API_KEY,
+  //   infura: process.env.INFURA_API_KEY,
+  // });
 
-  // const ensProvider = new ethers.providers.AlchemyProvider(
-  //   "homestead",
-  //   process.env.ALCHEMY_API_KEY
-  // );
+  const ensProvider = new ethers.providers.AlchemyProvider(
+    "homestead",
+    process.env.ALCHEMY_API_KEY
+  );
 
   const parser = fs.createReadStream(opts.file).pipe(
     parse({
@@ -44,7 +45,7 @@ async function main() {
   );
 
   const deployerAmount = (
-    await apollo2022.ticketBalanceOf(deployer)
+    await apollo2022.ticketBalanceOf(deployer.address)
   ).toNumber();
   console.log("Deployer tickets amount", deployerAmount);
 
@@ -71,7 +72,7 @@ async function main() {
 
         const options = { gasPrice };
         const tx = await apollo2022.safeTransferFrom(
-          deployer,
+          deployer.address,
           address,
           0,
           amount,
@@ -79,7 +80,14 @@ async function main() {
           options
         );
 
-        console.log("sending", deployer, "->", address, amount, tx.hash);
+        console.log(
+          "sending",
+          deployer.address,
+          "->",
+          address,
+          amount,
+          tx.hash
+        );
         state[address] = true;
       } else {
         console.log("skipping", address, amount);
