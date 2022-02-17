@@ -46,7 +46,7 @@ const func: DeployFunction = async function ({
     const end = start + time.minutes(30);
     const releaseAmount = 10;
 
-    await run("setupRelease", { start, end, amount: releaseAmount });
+    // await run("setupRelease", { start, end, amount: releaseAmount });
     await run("sendERC20", { address: wethAddr, amount: "100" });
   }
 };
@@ -55,3 +55,4 @@ export default func;
 
 func.tags = ["Apollo2022"];
 func.dependencies = [];
+func.skip = async () => true;
