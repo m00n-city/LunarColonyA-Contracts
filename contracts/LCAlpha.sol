@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
@@ -24,9 +24,11 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
 
     string public PROVENANCE;
     uint256 public constant PRICE = 0.08 ether;
-    uint256 public constant MAX_PURCHASE = 20;
-    uint256 public constant MAX_SUPPLY = 10000;
+    uint256 public constant MAX_PURCHASE = 20 + 1;
+    uint256 public constant MAX_SUPPLY = 10000 + 1;
     uint256 public constant RESERVED_TOKENS = 100;
+    bytes32 public merkleRoot;
+
     string public baseURI;
     SaleState saleState = SaleState.Paused;
 
@@ -77,21 +79,25 @@ contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
         saleState = newSaleState;
     }
 
+    function setMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
+        merkleRoot = newMerkleRoot;
+    }
+
     /**
      * Mint tokens
      */
     function mint(uint256 numberOfTokens) public payable {
         require(saleIsActive(), "Sale must be active");
         require(
-            numberOfTokens <= MAX_PURCHASE,
+            numberOfTokens < MAX_PURCHASE,
             "Max purchase exceeded"
         );
         require(
-            totalSupply() + numberOfTokens <= MAX_SUPPLY,
+            totalSupply() + numberOfTokens < MAX_SUPPLY,
             "Purchase would exceed max supply"
         );
         require(
-            PRICE * numberOfTokens <= msg.value,
+            PRICE * numberOfTokens == msg.value,
             "Ether value sent is not correct"
         );
 
