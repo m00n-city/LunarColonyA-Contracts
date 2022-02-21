@@ -19,4 +19,4 @@ export default func;
 
 func.tags = ["LCA", "LCAlpha"];
 func.dependencies = [];
-func.skip = async () => true;
+// func.skip = async () => true;

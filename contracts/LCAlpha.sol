@@ -22,6 +22,8 @@ contract LCAlpha is ERC721, Ownable {
         Open
     }
 
+    event SetBaseURI(string uri);
+
     string public PROVENANCE;
     uint256 public constant PRICE = 0.08 ether;
     uint256 public constant BP_PRICE = 0.06 ether;
@@ -73,6 +75,8 @@ contract LCAlpha is ERC721, Ownable {
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
         baseURI = newBaseURI;
+
+        emit SetBaseURI(newBaseURI);
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -119,7 +123,7 @@ contract LCAlpha is ERC721, Ownable {
         public
         payable
         saleIsActive(SaleState.Open)
-        validateEthAmount(BP_PRICE, amount)
+        validateEthAmount(PRICE, amount)
     {
         require(amount < MAX_PURCHASE, "Max purchase exceeded");
         require(totalSupply + amount < MAX_SUPPLY, "Purchase would exceed max supply");
