@@ -22,7 +22,6 @@ contract LCAlpha is ERC721, Ownable {
         Open
     }
 
-    event SetBaseURI(string uri);
 
     string public PROVENANCE;
     uint256 public constant PRICE = 0.08 ether;
@@ -66,8 +65,8 @@ contract LCAlpha is ERC721, Ownable {
         }
     }
 
-    /*
-     * Set provenance once it's calculated
+    /**
+     * @notice Set provenance once it's calculated
      */
     function setProvenanceHash(string memory provenanceHash) public onlyOwner {
         PROVENANCE = provenanceHash;
@@ -75,8 +74,6 @@ contract LCAlpha is ERC721, Ownable {
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
         baseURI = newBaseURI;
-
-        emit SetBaseURI(newBaseURI);
     }
 
     function _baseURI() internal view override returns (string memory) {
