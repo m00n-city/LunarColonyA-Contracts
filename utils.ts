@@ -1,7 +1,9 @@
 import { ParamType } from "@ethersproject/abi";
 import { BigNumberish, ContractFactory } from "ethers";
-import { HDNode } from "ethers/lib/utils";
+import { HDNode, keccak256 } from "ethers/lib/utils";
 import { ethers } from "hardhat";
+import MerkleTree from "merkletreejs";
+import fs from "fs";
 
 export async function increaseTime(seconds: number) {
   await ethers.provider.send("evm_increaseTime", [seconds]);
@@ -96,3 +98,34 @@ export function* hdNodeGen(
   }
   return count;
 }
+
+export type TreeData = {
+  [index: string]: { amount: number };
+};
+
+export const merkleTree = {
+  hashLeaf(address: string, allowance: number) {
+    return ethers.utils.solidityKeccak256(
+      ["address", "uint256"],
+      [address, allowance]
+    );
+  },
+
+  fromFile(fileName: string): MerkleTree {
+    const data: TreeData = JSON.parse(fs.readFileSync(fileName, "utf-8"));
+
+    return this.fromObject(data);
+  },
+
+  fromObject(data: TreeData): MerkleTree {
+    const leaves = Object.entries(data).map(([address, addrData]) => {
+      return this.hashLeaf(address, addrData.amount);
+    });
+
+    return new MerkleTree(leaves, keccak256, {
+      hashLeaves: false,
+      sortPairs: true,
+    });
+  },
+};
+
