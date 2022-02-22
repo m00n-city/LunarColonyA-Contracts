@@ -8,9 +8,13 @@ import {
   ERC20Factory,
   setAutomine,
   mine,
+  TreeData,
+  merkleTree,
 } from "../utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { BigNumber, Contract, utils } from "ethers";
+import { BigNumber, Contract } from "ethers";
+import { parseEther } from "ethers/lib/utils";
+import MerkleTree from "merkletreejs";
 
 enum SaleState {
   Paused,
@@ -18,16 +22,27 @@ enum SaleState {
   Open,
 }
 
+let mintPrice = parseEther("0.08");
+let bpMintPrice = parseEther("0.06");
+
 let deployer: SignerWithAddress,
   alice: SignerWithAddress,
   bob: SignerWithAddress,
   carol: SignerWithAddress;
 let lcAlpha: Contract;
+let treeData: TreeData;
+let tree: MerkleTree;
 
 describe("LCAlpha", function () {
   before(async function () {
     [alice, bob, carol] = await ethers.getUnnamedSigners();
     ({ deployer } = await ethers.getNamedSigners());
+    treeData = {
+      [alice.address]: { amount: 1 },
+      [bob.address]: { amount: 2 },
+      [carol.address]: { amount: 3 },
+    };
+    tree = merkleTree.fromObject(treeData);
   });
 
   beforeEach(async function () {
@@ -48,17 +63,10 @@ describe("LCAlpha", function () {
   });
 
   describe("#setBaseURI", function () {
-    it("should emit correct Event", async function () {
-      const uri = "http://gm.fren";
-      await expect(lcAlpha.setBaseURI(uri))
-        .to.emit(lcAlpha, "SetBaseURI")
-        .withArgs(uri);
-    });
-
     it("should be able to set baseUri", async function () {
-      lcAlpha.setSaleState(SaleState.Open);
+      await lcAlpha.setSaleState(SaleState.Open);
 
-      const overrides = { value: ethers.utils.parseEther("0.08") };
+      const overrides = { value: mintPrice };
       await lcAlpha.connect(alice).mint(1, overrides);
       await lcAlpha.connect(bob).mint(1, overrides);
 
@@ -72,6 +80,65 @@ describe("LCAlpha", function () {
 
       expect(aliceTokenUri).to.be.equal("http://gm.fren/0");
       expect(bobTokenUri).to.be.equal("http://gm.fren/1");
+    });
+  });
+
+  describe("#bpMint()", function () {
+    beforeEach(async function () {
+      await lcAlpha.setMerkleRoot(tree.getHexRoot());
+    });
+
+    it("should fail to mint tokens when the boarding pass owners sale is not active", async function () {
+      await expect(
+        lcAlpha.bpMint(1, 1, [], { value: bpMintPrice })
+      ).to.be.revertedWith("Sale not active");
+    });
+
+    it("should fail to mint tokens when ETH amount is provided", async function () {
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+      await expect(
+        lcAlpha.bpMint(1, 1, [], { value: bpMintPrice.mul(2) })
+      ).to.be.revertedWith("Incorrect ETH value sent");
+    });
+
+    it("should fail if wrong proof is provided", async function () {
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+      const wrongTree = merkleTree.fromObject({
+        [alice.address]: { amount: 2 },
+        [bob.address]: { amount: 2 },
+        [carol.address]: { amount: 3 },
+      });
+      const leaf = merkleTree.hashLeaf(alice.address, 2);
+      const proof = wrongTree.getHexProof(leaf);
+
+      await expect(
+        lcAlpha.connect(alice).bpMint(1, 2, proof, { value: bpMintPrice })
+      ).to.be.revertedWith("Invalid Merkle Tree proof supplied");
+    });
+
+    it("should succeed if valid proof is provided and emit Transfer event", async function () {
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+      const leaf = merkleTree.hashLeaf(alice.address, 1);
+      const proof = tree.getHexProof(leaf);
+
+      await expect(
+        lcAlpha.connect(alice).bpMint(1, 1, proof, { value: bpMintPrice })
+      ).to.emit(lcAlpha, "Transfer");
+
+      const balance = await lcAlpha.balanceOf(alice.address);
+      expect(balance).to.equal(1);
+    });
+
+    it("shouldn't be able to mint more than allowed", async function () {
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+      const leaf = merkleTree.hashLeaf(carol.address, 3);
+      const proof = tree.getHexProof(leaf);
+
+      await lcAlpha.connect(alice).bpMint(1, 3, proof, { value: bpMintPrice });
+      await lcAlpha.connect(alice).bpMint(1, 3, proof, { value: bpMintPrice });
+
+      const balance = await lcAlpha.balanceOf(alice.address);
+      expect(balance).to.equal(1);
     });
   });
 });
