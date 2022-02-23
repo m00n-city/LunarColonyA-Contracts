@@ -57,11 +57,9 @@ contract LCAlpha is ERC721, Ownable {
     /**
      * @notice reserve for DAO
      */
-    function reserveTokens() public onlyOwner {
-        uint256 supply = totalSupply;
-        uint256 i;
-        for (i = 0; i < RESERVED_TOKENS; i++) {
-            _safeMint(msg.sender, supply + i);
+    function reserveTokens(address to) public onlyOwner {
+        for (uint256 i = 0; i < RESERVED_TOKENS; i++) {
+            _mintNext(to);
         }
     }
 
@@ -109,7 +107,7 @@ contract LCAlpha is ERC721, Ownable {
         bpMintsPerAddr[msg.sender] += amount;
 
         for (uint256 i = 0; i < amount; i++) {
-            _mintNext();
+            _mintNext(msg.sender);
         }
     }
 
@@ -126,12 +124,12 @@ contract LCAlpha is ERC721, Ownable {
         require(totalSupply + amount < MAX_SUPPLY, "Purchase would exceed max supply");
 
         for (uint256 i = 0; i < amount; i++) {
-            _mintNext();
+            _mintNext(msg.sender);
         }
     }
 
-    function _mintNext() private {
-        _mint(msg.sender, totalSupply);
+    function _mintNext(address to) private {
+        _mint(to, totalSupply);
         unchecked {
             totalSupply++;
         }

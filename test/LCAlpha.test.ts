@@ -150,4 +150,37 @@ describe("LCAlpha", function () {
       expect(await lcAlpha.balanceOf(alice.address)).to.equal(0);
     });
   });
+
+  describe("#withdraw", function () {
+    it("should be able to withdraw ETH", async function () {
+      await lcAlpha.setMerkleRoot(tree.getRoot());
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+
+      let proof = tree.getProof(alice.address, 1);
+      await lcAlpha.connect(alice).bpMint(1, 1, proof, { value: bpMintPrice });
+
+      proof = tree.getProof(bob.address, 2);
+      await lcAlpha
+        .connect(bob)
+        .bpMint(2, 2, proof, { value: bpMintPrice.mul(2) });
+
+      await expect(await lcAlpha.withdraw()).to.changeEtherBalances(
+        [deployer, lcAlpha],
+        [parseEther("0.18"), parseEther("-0.18")]
+      );
+    });
+  });
+
+  describe("#reserveTokens", function () {
+    it("should be able to reserve tokens", async function () {
+      const reservedTokens = await lcAlpha.RESERVED_TOKENS();
+
+      await lcAlpha.reserveTokens(carol.address);
+      expect(await lcAlpha.balanceOf(carol.address)).to.be.equal(
+        reservedTokens
+      );
+
+      expect(await lcAlpha.totalSupply()).to.be.equal(reservedTokens);
+    });
+  });
 });
