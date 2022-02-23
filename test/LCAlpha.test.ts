@@ -232,4 +232,15 @@ describe("LCAlpha", function () {
       expect(await lcAlpha.totalSupply()).to.be.equal(reservedTokens);
     });
   });
+
+  describe("#setProvenanceHash", function () {
+    it("should be able to set provenanceHash", async function () {
+      const hash = "0x1234567";
+      await lcAlpha.setProvenanceHash(hash);
+      const provenanceHash = await lcAlpha.PROVENANCE();
+
+      expect(hash).to.be.equal(provenanceHash);
+    });
+  });
+
 });
