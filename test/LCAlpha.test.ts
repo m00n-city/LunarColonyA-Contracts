@@ -1,20 +1,9 @@
 import { ethers, deployments } from "hardhat";
 import { expect } from "chai";
-import {
-  increaseTime,
-  time,
-  blockTimestamp,
-  getErc20Factory,
-  ERC20Factory,
-  setAutomine,
-  mine,
-  TreeData,
-  BpMerkleTree,
-} from "../utils";
+import { setAutomine, TreeData, BpMerkleTree } from "../utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { BigNumber, Contract } from "ethers";
+import { Contract } from "ethers";
 import { parseEther } from "ethers/lib/utils";
-import MerkleTree from "merkletreejs";
 
 enum SaleState {
   Paused,
@@ -92,9 +81,15 @@ describe("LCAlpha", function () {
       await expect(
         lcAlpha.bpMint(1, 1, [], { value: bpMintPrice })
       ).to.be.revertedWith("Sale not active");
+
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      await expect(
+        lcAlpha.bpMint(1, 1, [], { value: bpMintPrice })
+      ).to.be.revertedWith("Sale not active");
     });
 
-    it("should fail to mint tokens when ETH amount is provided", async function () {
+    it("should fail to mint tokens when incorrect ETH amount is provided", async function () {
       await lcAlpha.setSaleState(SaleState.BoardingPass);
       await expect(
         lcAlpha.bpMint(1, 1, [], { value: bpMintPrice.mul(2) })
@@ -151,6 +146,60 @@ describe("LCAlpha", function () {
     });
   });
 
+  describe("#mint()", function () {
+    it("should fail to mint tokens when the public sale is not active", async function () {
+      await expect(lcAlpha.mint(1, { value: mintPrice })).to.be.revertedWith(
+        "Sale not active"
+      );
+
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+
+      await expect(lcAlpha.mint(1, { value: mintPrice })).to.be.revertedWith(
+        "Sale not active"
+      );
+    });
+
+    it("should fail to mint tokens when incorrect ETH amount is provided", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+      await expect(
+        lcAlpha.mint(1, { value: bpMintPrice.mul(2) })
+      ).to.be.revertedWith("Incorrect ETH value sent");
+
+      await expect(
+        lcAlpha.mint(1, { value: bpMintPrice.add(1) })
+      ).to.be.revertedWith("Incorrect ETH value sent");
+
+      await expect(
+        lcAlpha.mint(1, { value: bpMintPrice.sub(1) })
+      ).to.be.revertedWith("Incorrect ETH value sent");
+    });
+
+    it("should be able to mint a token and emit Transfer event", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      await expect(
+        lcAlpha.connect(alice).mint(1, { value: mintPrice })
+      ).to.emit(lcAlpha, "Transfer");
+
+      const balance = await lcAlpha.balanceOf(alice.address);
+      expect(balance).to.equal(1);
+    });
+
+    it("shouldn't be able to mint more than allowed", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      await lcAlpha.connect(carol).mint(1, { value: mintPrice });
+      await lcAlpha.connect(carol).mint(1, { value: mintPrice });
+      await lcAlpha.connect(carol).mint(20, { value: mintPrice.mul(20) });
+      await expect(
+        lcAlpha.connect(carol).mint(21, { value: mintPrice.mul(21) })
+      ).to.be.revertedWith("Max purchase exceeded");
+
+      expect(await lcAlpha.balanceOf(carol.address))
+        .to.equal(await lcAlpha.totalSupply())
+        .to.equal(22);
+    });
+  });
   describe("#withdraw", function () {
     it("should be able to withdraw ETH", async function () {
       await lcAlpha.setMerkleRoot(tree.getRoot());
