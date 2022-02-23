@@ -131,14 +131,27 @@ describe("LCAlpha", function () {
 
     it("shouldn't be able to mint more than allowed", async function () {
       await lcAlpha.setSaleState(SaleState.BoardingPass);
-      const leaf = merkleTree.hashLeaf(carol.address, 3);
-      const proof = tree.getHexProof(leaf);
+      let leaf = merkleTree.hashLeaf(carol.address, 3);
+      let proof = tree.getHexProof(leaf);
 
-      await lcAlpha.connect(alice).bpMint(1, 3, proof, { value: bpMintPrice });
-      await lcAlpha.connect(alice).bpMint(1, 3, proof, { value: bpMintPrice });
+      await lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice });
+      await lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice });
+      await lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice });
+      await expect(
+        lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice })
+      ).to.be.revertedWith("Exceeds allowed amount");
 
-      const balance = await lcAlpha.balanceOf(alice.address);
-      expect(balance).to.equal(1);
+      expect(await lcAlpha.balanceOf(carol.address)).to.equal(3);
+
+      leaf = merkleTree.hashLeaf(alice.address, 1);
+      proof = tree.getHexProof(leaf);
+      await expect(
+        lcAlpha
+          .connect(alice)
+          .bpMint(2, 1, proof, { value: bpMintPrice.mul(2) })
+      ).to.be.revertedWith("Exceeds allowed amount");
+
+      expect(lcAlpha.balanceOf(alice.address)).to.equal(0);
     });
   });
 });
