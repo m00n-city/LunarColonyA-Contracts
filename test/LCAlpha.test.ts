@@ -9,7 +9,7 @@ import {
   setAutomine,
   mine,
   TreeData,
-  merkleTree,
+  BpMerkleTree,
 } from "../utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { BigNumber, Contract } from "ethers";
@@ -31,7 +31,7 @@ let deployer: SignerWithAddress,
   carol: SignerWithAddress;
 let lcAlpha: Contract;
 let treeData: TreeData;
-let tree: MerkleTree;
+let tree: BpMerkleTree;
 
 describe("LCAlpha", function () {
   before(async function () {
@@ -42,7 +42,7 @@ describe("LCAlpha", function () {
       [bob.address]: { amount: 2 },
       [carol.address]: { amount: 3 },
     };
-    tree = merkleTree.fromObject(treeData);
+    tree = new BpMerkleTree(treeData);
   });
 
   beforeEach(async function () {
@@ -85,7 +85,7 @@ describe("LCAlpha", function () {
 
   describe("#bpMint()", function () {
     beforeEach(async function () {
-      await lcAlpha.setMerkleRoot(tree.getHexRoot());
+      await lcAlpha.setMerkleRoot(tree.getRoot());
     });
 
     it("should fail to mint tokens when the boarding pass owners sale is not active", async function () {
@@ -103,13 +103,12 @@ describe("LCAlpha", function () {
 
     it("should fail if wrong proof is provided", async function () {
       await lcAlpha.setSaleState(SaleState.BoardingPass);
-      const wrongTree = merkleTree.fromObject({
+      const wrongTree = new BpMerkleTree({
         [alice.address]: { amount: 2 },
         [bob.address]: { amount: 2 },
         [carol.address]: { amount: 3 },
       });
-      const leaf = merkleTree.hashLeaf(alice.address, 2);
-      const proof = wrongTree.getHexProof(leaf);
+      const proof = wrongTree.getProof(alice.address, 2);
 
       await expect(
         lcAlpha.connect(alice).bpMint(1, 2, proof, { value: bpMintPrice })
@@ -118,8 +117,7 @@ describe("LCAlpha", function () {
 
     it("should succeed if valid proof is provided and emit Transfer event", async function () {
       await lcAlpha.setSaleState(SaleState.BoardingPass);
-      const leaf = merkleTree.hashLeaf(alice.address, 1);
-      const proof = tree.getHexProof(leaf);
+      const proof = tree.getProof(alice.address, 1);
 
       await expect(
         lcAlpha.connect(alice).bpMint(1, 1, proof, { value: bpMintPrice })
@@ -131,8 +129,7 @@ describe("LCAlpha", function () {
 
     it("shouldn't be able to mint more than allowed", async function () {
       await lcAlpha.setSaleState(SaleState.BoardingPass);
-      let leaf = merkleTree.hashLeaf(carol.address, 3);
-      let proof = tree.getHexProof(leaf);
+      let proof = tree.getProof(carol.address, 3);
 
       await lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice });
       await lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice });
@@ -143,15 +140,14 @@ describe("LCAlpha", function () {
 
       expect(await lcAlpha.balanceOf(carol.address)).to.equal(3);
 
-      leaf = merkleTree.hashLeaf(alice.address, 1);
-      proof = tree.getHexProof(leaf);
+      proof = tree.getProof(alice.address, 1);
       await expect(
         lcAlpha
           .connect(alice)
           .bpMint(2, 1, proof, { value: bpMintPrice.mul(2) })
       ).to.be.revertedWith("Exceeds allowed amount");
 
-      expect(lcAlpha.balanceOf(alice.address)).to.equal(0);
+      expect(await lcAlpha.balanceOf(alice.address)).to.equal(0);
     });
   });
 });

@@ -103,29 +103,43 @@ export type TreeData = {
   [index: string]: { amount: number };
 };
 
-export const merkleTree = {
-  hashLeaf(address: string, allowance: number) {
+export class BpMerkleTree {
+  tree: MerkleTree;
+
+  constructor(data: TreeData) {
+    const leaves = Object.entries(data).map(([address, addrData]) => {
+      return BpMerkleTree.hashLeaf(address, addrData.amount);
+    });
+
+    this.tree = new MerkleTree(leaves, keccak256, {
+      sort: true,
+    });
+  }
+
+  getProof(address: string, allowance: number): string[] {
+    const leaf = BpMerkleTree.hashLeaf(address, allowance);
+    return this.tree.getHexProof(leaf);
+  }
+
+  getRoot(): string {
+    return this.tree.getHexRoot();
+  }
+
+  static hashLeaf(address: string, allowance: number): string {
     return ethers.utils.solidityKeccak256(
       ["address", "uint256"],
       [address, allowance]
     );
-  },
+  }
 
-  fromFile(fileName: string): MerkleTree {
+  static fromFile(fileName: string): BpMerkleTree {
     const data: TreeData = JSON.parse(fs.readFileSync(fileName, "utf-8"));
 
-    return this.fromObject(data);
-  },
+    return new BpMerkleTree(data);
+  }
 
-  fromObject(data: TreeData): MerkleTree {
-    const leaves = Object.entries(data).map(([address, addrData]) => {
-      return this.hashLeaf(address, addrData.amount);
-    });
-
-    return new MerkleTree(leaves, keccak256, {
-      hashLeaves: false,
-      sortPairs: true,
-    });
-  },
-};
+  static fromObject(data: TreeData): BpMerkleTree {
+    return new BpMerkleTree(data);
+  }
+}
 
