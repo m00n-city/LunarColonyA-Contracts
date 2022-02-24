@@ -143,8 +143,7 @@ contract LCAlpha is ERC721, Ownable {
 
         while (found < balance) {
             if (_exists(tokenId) && ownerOf(tokenId) == ownerAddr) {
-                tokens[found] = tokenId;
-                found++;
+                tokens[found++] = tokenId;
             }
             tokenId++;
         }

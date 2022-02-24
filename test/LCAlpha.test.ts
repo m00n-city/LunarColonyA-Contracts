@@ -1,8 +1,8 @@
 import { ethers, deployments } from "hardhat";
 import { expect } from "chai";
-import { setAutomine, TreeData, BpMerkleTree } from "../utils";
+import { setAutomine, TreeData, BpMerkleTree, range } from "../utils";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { Contract } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { parseEther } from "ethers/lib/utils";
 
 enum SaleState {
@@ -243,4 +243,46 @@ describe("LCAlpha", function () {
     });
   });
 
+  describe("#walletOfOwner", function () {
+    it("should return correct ids", async function () {
+      await lcAlpha.setMerkleRoot(tree.getRoot());
+      await lcAlpha.setSaleState(SaleState.BoardingPass);
+
+      // ids: [0]
+      let proof = tree.getProof(carol.address, 3);
+      await lcAlpha.connect(carol).bpMint(1, 3, proof, { value: bpMintPrice });
+
+      // ids: [1,2]
+      proof = tree.getProof(bob.address, 2);
+      await lcAlpha
+        .connect(bob)
+        .bpMint(2, 2, proof, { value: bpMintPrice.mul(2) });
+
+      // ids: [3]
+      proof = tree.getProof(alice.address, 1);
+      await lcAlpha.connect(alice).bpMint(1, 1, proof, { value: bpMintPrice });
+
+      // ids: [4-103]
+      await lcAlpha.reserveTokens(deployer.address);
+
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      // ids: [104-114]
+      await lcAlpha.connect(alice).mint(11, { value: mintPrice.mul(11) });
+
+      async function walletOfOwner(address: string): Promise<number[]> {
+        return (await lcAlpha.walletOfOwner(address)).map((v: BigNumber) =>
+          v.toNumber()
+        );
+      }
+
+      expect(await walletOfOwner(carol.address)).to.eql([0]);
+      expect(await walletOfOwner(bob.address)).to.eql([1, 2]);
+      expect(await walletOfOwner(deployer.address)).to.eql(range(4, 103));
+      expect(await walletOfOwner(alice.address)).to.eql([
+        3,
+        ...range(104, 114),
+      ]);
+    });
+  });
 });
