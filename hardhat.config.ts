@@ -87,6 +87,22 @@ task("sendERC20", "Sends ERC20 token to all unnamed accounts")
     }
   });
 
+task("setSaleState", "Set LCA contract sale state")
+  .addParam("state", "Sale state")
+  .setAction(async function ({ state }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    await lcAlpha.setSaleState(state);
+  });
+
+task("setMerkleRoot", "Set LCA contract sale state")
+  .addParam("root", "Merkle root")
+  .setAction(async function ({ root }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    await lcAlpha.setMerkleRoot(root);
+  });
+
 const accounts = {
   mnemonic: process.env.MNEMONIC,
 };

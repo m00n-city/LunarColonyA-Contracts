@@ -126,8 +126,9 @@ async function main() {
     for (const [address, data] of Object.entries(owners.data)) {
       if (data.amount > 0) {
         newOwnersData[address] = data;
+      } else {
+        log.process("skip:", address, data.amount);
       }
-      log.process("skip:", address, data.amount);
     }
     const fileName = `${opts.contractAddress}_no0.json`;
     saveFile(fileName, newOwnersData);
