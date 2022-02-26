@@ -32,7 +32,7 @@ contract LCAlpha is ERC721, Ownable {
     bytes32 public merkleRoot;
 
     string public baseURI;
-    SaleState saleState = SaleState.Paused;
+    SaleState public saleState = SaleState.Paused;
 
     uint256 public totalSupply;
     mapping(address => uint256) public bpMintsPerAddr;
