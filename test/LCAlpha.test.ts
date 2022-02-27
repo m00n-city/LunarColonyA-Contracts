@@ -199,7 +199,53 @@ describe("LCAlpha", function () {
         .to.equal(await lcAlpha.totalSupply())
         .to.equal(22);
     });
+
+    it.skip("should not allow to mint more than maxSupply", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      const maxSupply = (await lcAlpha.maxSupply()).sub(1).toNumber();
+      const maxPurchase = (await lcAlpha.maxPurchase()).sub(1).toNumber();
+
+      const count = maxSupply / maxPurchase;
+
+      for (let i = 0; i < count - 1; i++) {
+        await lcAlpha
+          .connect(alice)
+          .mint(maxPurchase, { value: mintPrice.mul(maxPurchase) });
+      }
+
+      await lcAlpha
+        .connect(alice)
+        .mint(maxPurchase, { value: mintPrice.mul(maxPurchase) });
+
+      await expect(
+        lcAlpha.connect(alice).mint(1, { value: mintPrice })
+      ).to.be.revertedWith("Purchase would exceed max supply");
+    });
   });
+
+  describe("#setMintPrice", function () {
+    it("should be able to set new mint price", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      await lcAlpha.connect(alice).mint(1, { value: mintPrice });
+      expect(await lcAlpha.balanceOf(alice.address)).to.be.equal(1);
+
+      const newPrice = parseEther("0.1");
+      await lcAlpha.setMintPrice(newPrice);
+
+      expect(await lcAlpha.mintPrice()).to.be.equal(newPrice);
+
+      await expect(
+        lcAlpha.connect(alice).mint(1, { value: mintPrice })
+      ).to.be.revertedWith("Incorrect ETH value sent");
+
+      await lcAlpha.connect(alice).mint(1, { value: newPrice });
+
+      expect(await lcAlpha.balanceOf(alice.address)).to.be.equal(2);
+    });
+  });
+
   describe("#withdraw", function () {
     it("should be able to withdraw ETH", async function () {
       await lcAlpha.setMerkleRoot(tree.getRoot());
