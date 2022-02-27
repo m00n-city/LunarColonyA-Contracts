@@ -318,4 +318,62 @@ describe("LCAlpha", function () {
       ).to.equals(false);
     });
   });
+
+  describe("#tokenURI", function () {
+    it("should be able to set preRevealURI", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      const overrides = { value: mintPrice };
+      await lcAlpha.connect(alice).mint(1, overrides);
+      await lcAlpha.connect(bob).mint(1, overrides);
+
+      let aliceTokenUri = await lcAlpha.tokenURI(0);
+      let bobTokenUri = await lcAlpha.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal(bobTokenUri).to.be.equal("");
+
+      await lcAlpha.setPreRevealURI("http://gm.fren/pre");
+      aliceTokenUri = await lcAlpha.tokenURI(0);
+      bobTokenUri = await lcAlpha.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal("http://gm.fren/pre");
+      expect(bobTokenUri).to.be.equal("http://gm.fren/pre");
+    });
+
+    it("should be able to set baseUri", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      const overrides = { value: mintPrice };
+      await lcAlpha.connect(alice).mint(1, overrides);
+      await lcAlpha.connect(bob).mint(1, overrides);
+
+      let aliceTokenUri = await lcAlpha.tokenURI(0);
+      let bobTokenUri = await lcAlpha.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal(bobTokenUri).to.be.equal("");
+
+      await lcAlpha.setBaseURI("http://gm.fren/");
+      aliceTokenUri = await lcAlpha.tokenURI(0);
+      bobTokenUri = await lcAlpha.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal("http://gm.fren/0");
+      expect(bobTokenUri).to.be.equal("http://gm.fren/1");
+    });
+
+    it("should prefer baseUri over preRevealURI", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+
+      const overrides = { value: mintPrice };
+      await lcAlpha.connect(alice).mint(1, overrides);
+      await lcAlpha.connect(bob).mint(1, overrides);
+
+      let aliceTokenUri = await lcAlpha.tokenURI(0);
+      let bobTokenUri = await lcAlpha.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal(bobTokenUri).to.be.equal("");
+
+      await lcAlpha.setBaseURI("http://gm.fren/");
+      await lcAlpha.setPreRevealURI("http://gm.fren/pre");
+
+      aliceTokenUri = await lcAlpha.tokenURI(0);
+      bobTokenUri = await lcAlpha.tokenURI(1);
+      expect(aliceTokenUri).to.be.equal("http://gm.fren/0");
+      expect(bobTokenUri).to.be.equal("http://gm.fren/1");
+    });
+  });
 });

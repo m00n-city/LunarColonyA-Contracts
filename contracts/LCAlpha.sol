@@ -16,6 +16,8 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
 contract LCAlpha is ERC721, Ownable {
+    using Strings for uint256;
+
     enum SaleState {
         Paused,
         BoardingPass,
@@ -23,15 +25,16 @@ contract LCAlpha is ERC721, Ownable {
     }
 
     string public provenance;
-    uint256 public constant mintPrice = 0.08 ether;
+    uint256 public mintPrice = 0.08 ether;
     uint256 public constant bpMintPrice = 0.06 ether;
     uint256 public constant maxPurchase = 20 + 1;
     uint256 public constant maxSupply = 10000 + 1;
     uint256 public constant reservedTokens = 50;
     bytes32 public merkleRoot;
     address public proxyRegistryAddress;
-
     string public baseURI;
+    string public preRevealURI;
+
     SaleState public saleState = SaleState.Paused;
 
     uint256 public totalSupply;
@@ -72,6 +75,14 @@ contract LCAlpha is ERC721, Ownable {
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
         baseURI = newBaseURI;
+    }
+
+    function setPreRevealURI(string memory newPreRevealURI) public onlyOwner {
+        preRevealURI = newPreRevealURI;
+    }
+
+    function setMintPrice(uint256 newMintPrice) public onlyOwner {
+        mintPrice = newMintPrice;
     }
 
     function _baseURI() internal view override returns (string memory) {
@@ -158,12 +169,7 @@ contract LCAlpha is ERC721, Ownable {
     /**
      * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.
      */
-    function isApprovedForAll(address owner, address operator)
-        override
-        public
-        view
-        returns (bool)
-    {
+    function isApprovedForAll(address owner, address operator) public view override returns (bool) {
         // Whitelist OpenSea proxy contract for easy trading.
         ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
         if (address(proxyRegistry.proxies(owner)) == operator) {
@@ -172,8 +178,17 @@ contract LCAlpha is ERC721, Ownable {
 
         return super.isApprovedForAll(owner, operator);
     }
-}
 
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
+        string memory __baseURI = _baseURI();
+        return
+            bytes(__baseURI).length > 0
+                ? string(abi.encodePacked(__baseURI, tokenId.toString()))
+                : preRevealURI;
+    }
+}
 
 contract OwnableDelegateProxy {}
 
