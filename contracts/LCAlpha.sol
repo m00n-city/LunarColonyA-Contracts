@@ -27,7 +27,7 @@ contract LCAlpha is ERC721, Ownable {
     uint256 public constant BP_PRICE = 0.06 ether;
     uint256 public constant MAX_PURCHASE = 20 + 1;
     uint256 public constant MAX_SUPPLY = 10000 + 1;
-    uint256 public constant RESERVED_TOKENS = 100;
+    uint256 public constant RESERVED_TOKENS = 50;
     bytes32 public merkleRoot;
     address public proxyRegistryAddress;
 

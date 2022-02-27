@@ -278,11 +278,8 @@ describe("LCAlpha", function () {
 
       expect(await walletOfOwner(carol.address)).to.eql([0]);
       expect(await walletOfOwner(bob.address)).to.eql([1, 2]);
-      expect(await walletOfOwner(deployer.address)).to.eql(range(4, 103));
-      expect(await walletOfOwner(alice.address)).to.eql([
-        3,
-        ...range(104, 114),
-      ]);
+      expect(await walletOfOwner(deployer.address)).to.eql(range(4, 53));
+      expect(await walletOfOwner(alice.address)).to.eql([3, ...range(54, 64)]);
     });
   });
 
@@ -313,6 +310,7 @@ describe("LCAlpha", function () {
           .connect(alice)
           .isApprovedForAll(alice.address, bob.address)
       ).to.equals(true);
+
       expect(
         await lcAlpha
           .connect(alice)
