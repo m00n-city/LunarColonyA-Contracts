@@ -285,4 +285,39 @@ describe("LCAlpha", function () {
       ]);
     });
   });
+
+  describe("#isApprovedForAll", function () {
+    let proxyRegistry: Contract;
+
+    beforeEach(async function () {
+      const contractFactory = await ethers.getContractFactory(
+        "ProxyRegistryMock",
+        deployer
+      );
+
+      proxyRegistry = await contractFactory.deploy();
+      await lcAlpha.setProxyRegistryAddress(proxyRegistry.address);
+    });
+
+    it("should revert when the operator is the owner", async function () {
+      await expect(
+        lcAlpha.connect(alice).setApprovalForAll(alice.address, true)
+      ).to.be.revertedWith("ERC721: approve to caller");
+    });
+
+    it("should return true if the correct proxy address is correct", async function () {
+      await proxyRegistry.setProxyForOwner(alice.address, bob.address);
+
+      expect(
+        await lcAlpha
+          .connect(alice)
+          .isApprovedForAll(alice.address, bob.address)
+      ).to.equals(true);
+      expect(
+        await lcAlpha
+          .connect(alice)
+          .isApprovedForAll(alice.address, carol.address)
+      ).to.equals(false);
+    });
+  });
 });

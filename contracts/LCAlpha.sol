@@ -22,7 +22,6 @@ contract LCAlpha is ERC721, Ownable {
         Open
     }
 
-
     string public PROVENANCE;
     uint256 public constant PRICE = 0.08 ether;
     uint256 public constant BP_PRICE = 0.06 ether;
@@ -30,6 +29,7 @@ contract LCAlpha is ERC721, Ownable {
     uint256 public constant MAX_SUPPLY = 10000 + 1;
     uint256 public constant RESERVED_TOKENS = 100;
     bytes32 public merkleRoot;
+    address public proxyRegistryAddress;
 
     string public baseURI;
     SaleState public saleState = SaleState.Paused;
@@ -84,6 +84,10 @@ contract LCAlpha is ERC721, Ownable {
 
     function setMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
         merkleRoot = newMerkleRoot;
+    }
+
+    function setProxyRegistryAddress(address _proxyRegistryAddress) external onlyOwner {
+        proxyRegistryAddress = _proxyRegistryAddress;
     }
 
     /**
@@ -150,4 +154,32 @@ contract LCAlpha is ERC721, Ownable {
 
         return tokens;
     }
+
+    /**
+     * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.
+     */
+    function isApprovedForAll(address owner, address operator)
+        override
+        public
+        view
+        returns (bool)
+    {
+        // Whitelist OpenSea proxy contract for easy trading.
+        ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+        if (address(proxyRegistry.proxies(owner)) == operator) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
+    }
+}
+
+
+contract OwnableDelegateProxy {}
+
+/**
+ * Used to delegate ownership of a contract to another address, to save on unneeded transactions to approve contract use for users
+ */
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
 }
