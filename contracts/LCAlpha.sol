@@ -22,12 +22,12 @@ contract LCAlpha is ERC721, Ownable {
         Open
     }
 
-    string public PROVENANCE;
-    uint256 public constant PRICE = 0.08 ether;
-    uint256 public constant BP_PRICE = 0.06 ether;
-    uint256 public constant MAX_PURCHASE = 20 + 1;
-    uint256 public constant MAX_SUPPLY = 10000 + 1;
-    uint256 public constant RESERVED_TOKENS = 50;
+    string public provenance;
+    uint256 public constant mintPrice = 0.08 ether;
+    uint256 public constant bpMintPrice = 0.06 ether;
+    uint256 public constant maxPurchase = 20 + 1;
+    uint256 public constant maxSupply = 10000 + 1;
+    uint256 public constant reservedTokens = 50;
     bytes32 public merkleRoot;
     address public proxyRegistryAddress;
 
@@ -58,7 +58,7 @@ contract LCAlpha is ERC721, Ownable {
      * @notice reserve for DAO
      */
     function reserveTokens(address to) public onlyOwner {
-        for (uint256 i = 0; i < RESERVED_TOKENS; i++) {
+        for (uint256 i = 0; i < reservedTokens; i++) {
             _mintNext(to);
         }
     }
@@ -67,7 +67,7 @@ contract LCAlpha is ERC721, Ownable {
      * @notice Set provenance once it's calculated
      */
     function setProvenanceHash(string memory provenanceHash) public onlyOwner {
-        PROVENANCE = provenanceHash;
+        provenance = provenanceHash;
     }
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
@@ -97,7 +97,7 @@ contract LCAlpha is ERC721, Ownable {
         uint256 amount,
         uint256 allowedAmount,
         bytes32[] calldata proof
-    ) public payable saleIsActive(SaleState.BoardingPass) validateEthAmount(BP_PRICE, amount) {
+    ) public payable saleIsActive(SaleState.BoardingPass) validateEthAmount(bpMintPrice, amount) {
         require(
             MerkleProof.verify(
                 proof,
@@ -122,10 +122,10 @@ contract LCAlpha is ERC721, Ownable {
         public
         payable
         saleIsActive(SaleState.Open)
-        validateEthAmount(PRICE, amount)
+        validateEthAmount(mintPrice, amount)
     {
-        require(amount < MAX_PURCHASE, "Max purchase exceeded");
-        require(totalSupply + amount < MAX_SUPPLY, "Purchase would exceed max supply");
+        require(amount < maxPurchase, "Max purchase exceeded");
+        require(totalSupply + amount < maxSupply, "Purchase would exceed max supply");
 
         for (uint256 i = 0; i < amount; i++) {
             _mintNext(msg.sender);

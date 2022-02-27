@@ -37,7 +37,13 @@ task("setupRelease", "Setups a new LCA Boarding Passes release")
     gasPrice = gasPrice.mul(2);
     console.log("gas price * 2", ethers.utils.formatUnits(gasPrice, "gwei"));
 
-    const options = { gasPrice };
+    // const gasLimit = await apollo2022.estimateGas.setupRelease(start, end, amount);
+    // console.log("gas limit", gasLimit.toString())
+
+    const options = {
+      gasPrice,
+    };
+
     const tx = await apollo2022.setupRelease(start, end, amount, options);
     console.log(tx);
 
@@ -165,7 +171,7 @@ module.exports = {
       chainId: 42,
     },
     matic: {
-      url: `https://rpc-mainnet.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
+      url: `https://polygon-rpc.com/`,
       accounts,
       chainId: 137,
       tags: ["l2"],

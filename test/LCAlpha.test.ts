@@ -222,7 +222,7 @@ describe("LCAlpha", function () {
 
   describe("#reserveTokens", function () {
     it("should be able to reserve tokens", async function () {
-      const reservedTokens = await lcAlpha.RESERVED_TOKENS();
+      const reservedTokens = await lcAlpha.reservedTokens();
 
       await lcAlpha.reserveTokens(carol.address);
       expect(await lcAlpha.balanceOf(carol.address)).to.be.equal(
@@ -237,7 +237,7 @@ describe("LCAlpha", function () {
     it("should be able to set provenanceHash", async function () {
       const hash = "0x1234567";
       await lcAlpha.setProvenanceHash(hash);
-      const provenanceHash = await lcAlpha.PROVENANCE();
+      const provenanceHash = await lcAlpha.provenance();
 
       expect(hash).to.be.equal(provenanceHash);
     });
