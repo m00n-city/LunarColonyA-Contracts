@@ -250,6 +250,7 @@ describe("LCAlpha", function () {
     it("should be able to withdraw ETH", async function () {
       await lcAlpha.setMerkleRoot(tree.getRoot());
       await lcAlpha.setSaleState(SaleState.BoardingPass);
+      await lcAlpha.setBeneficiary(deployer.address);
 
       let proof = tree.getProof(alice.address, 1);
       await lcAlpha.connect(alice).bpMint(1, 1, proof, { value: bpMintPrice });
@@ -426,6 +427,24 @@ describe("LCAlpha", function () {
       bobTokenUri = await lcAlpha.tokenURI(1);
       expect(aliceTokenUri).to.be.equal("http://gm.fren/0");
       expect(bobTokenUri).to.be.equal("http://gm.fren/1");
+    });
+  });
+
+  describe("#royaltyInfo", function () {
+    it("should return correct values", async function () {
+      await lcAlpha.setSaleState(SaleState.Open);
+      await lcAlpha.setRoyalties(deployer.address, 5);
+
+      expect(await lcAlpha.royaltyInfo(0, parseEther("1.0"))).to.eql([
+        deployer.address,
+        parseEther("0.05"),
+      ]);
+
+      await lcAlpha.setRoyalties(alice.address, 3);
+      expect(await lcAlpha.royaltyInfo(0, parseEther("1.0"))).to.eql([
+        alice.address,
+        parseEther("0.03"),
+      ]);
     });
   });
 });

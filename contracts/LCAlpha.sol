@@ -54,12 +54,14 @@ import "@openzeppelin/contracts-4.5/access/Ownable.sol";
 import "@openzeppelin/contracts-4.5/utils/Counters.sol";
 import "@openzeppelin/contracts-4.5/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts-4.5/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-4.5/interfaces/IERC2981.sol";
+import "@openzeppelin/contracts-4.5/interfaces/IERC165.sol";
 
 /**
  * @title LunarColonyAlpha contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract LCAlpha is ERC721, Ownable {
+contract LCAlpha is ERC721, IERC2981, Ownable {
     using Strings for uint256;
 
     enum SaleState {
@@ -84,6 +86,10 @@ contract LCAlpha is ERC721, Ownable {
     uint256 public totalSupply;
     mapping(address => uint256) public bpMintsPerAddr;
 
+    address public beneficiary;
+    address public royaltyAddr;
+    uint256 public royaltyPct;
+
     modifier validateEthAmount(uint256 price, uint256 amount) {
         require(price * amount == msg.value, "Incorrect ETH value sent");
         _;
@@ -98,7 +104,7 @@ contract LCAlpha is ERC721, Ownable {
 
     function withdraw() public onlyOwner {
         uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
+        payable(beneficiary).transfer(balance);
     }
 
     /**
@@ -129,6 +135,15 @@ contract LCAlpha is ERC721, Ownable {
         mintPrice = newMintPrice;
     }
 
+    function setBeneficiary(address newBeneficiary) public onlyOwner {
+        beneficiary = newBeneficiary;
+    }
+
+    function setRoyalties(address newRoyaltyAddr, uint256 newRoyaltyPct) public onlyOwner {
+        royaltyAddr = newRoyaltyAddr;
+        royaltyPct = newRoyaltyPct;
+    }
+
     function _baseURI() internal view override returns (string memory) {
         return baseURI;
     }
@@ -141,8 +156,8 @@ contract LCAlpha is ERC721, Ownable {
         merkleRoot = newMerkleRoot;
     }
 
-    function setProxyRegistryAddress(address _proxyRegistryAddress) external onlyOwner {
-        proxyRegistryAddress = _proxyRegistryAddress;
+    function setProxyRegistryAddress(address newProxyRegistryAddress) external onlyOwner {
+        proxyRegistryAddress = newProxyRegistryAddress;
     }
 
     /**
@@ -231,6 +246,28 @@ contract LCAlpha is ERC721, Ownable {
             bytes(__baseURI).length > 0
                 ? string(abi.encodePacked(__baseURI, tokenId.toString()))
                 : preRevealURI;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, IERC165)
+        returns (bool)
+    {
+        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev See IERC2981
+     */
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        external
+        view
+        override
+        returns (address, uint256)
+    {
+        uint256 royaltyAmount = (salePrice / 100) * royaltyPct;
+        return (royaltyAddr, royaltyAmount);
     }
 }
 
