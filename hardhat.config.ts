@@ -109,6 +109,19 @@ task("setMerkleRoot", "Set LCA contract sale state")
     await lcAlpha.setMerkleRoot(root);
   });
 
+task("reserveTokens", "Reserves tickets for giveaways")
+  .addParam("address", "Receiver address")
+  .setAction(async function ({ address }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+    console.log(`LCAlpha.reserveTokens(
+      address=${address}
+    )`);
+    const tx = await lcAlpha.reserveTokens(address);
+    console.log(tx);
+
+    await tx.wait();
+  });
+
 const accounts = {
   mnemonic: process.env.MNEMONIC,
 };
