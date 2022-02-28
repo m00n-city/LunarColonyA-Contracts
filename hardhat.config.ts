@@ -98,7 +98,8 @@ task("setSaleState", "Set LCA contract sale state")
   .setAction(async function ({ state }, { ethers }) {
     const lcAlpha = await ethers.getContract("LCAlpha");
 
-    await lcAlpha.setSaleState(state);
+    const tx = await lcAlpha.setSaleState(state);
+    console.log(tx);
   });
 
 task("setMerkleRoot", "Set LCA contract sale state")
@@ -106,7 +107,8 @@ task("setMerkleRoot", "Set LCA contract sale state")
   .setAction(async function ({ root }, { ethers }) {
     const lcAlpha = await ethers.getContract("LCAlpha");
 
-    await lcAlpha.setMerkleRoot(root);
+    const tx = await lcAlpha.setMerkleRoot(root);
+    console.log(tx);
   });
 
 task("reserveTokens", "Reserves tickets for giveaways")
@@ -120,6 +122,16 @@ task("reserveTokens", "Reserves tickets for giveaways")
     console.log(tx);
 
     await tx.wait();
+  });
+
+task("setRoyalties", "Set LCA contract sale state")
+  .addParam("address", "Royalty address")
+  .addParam("percent", "Royalty percent")
+  .setAction(async function ({ address, percent }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setRoyalties(address, percent);
+    console.log(tx);
   });
 
 const accounts = {
