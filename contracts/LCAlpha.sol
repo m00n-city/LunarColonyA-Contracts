@@ -99,7 +99,19 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
         _;
     }
 
-    constructor() ERC721("Lunar Colony Alpha", "LCA") {}
+    constructor(
+        address _beneficiary,
+        address _royaltyAddr,
+        uint256 _royaltyPct,
+        address _proxyRegistryAddress,
+        string memory _preRevealURI
+    ) ERC721("Lunar Colony Alpha", "LCA") {
+        beneficiary = _beneficiary;
+        royaltyAddr = _royaltyAddr;
+        royaltyPct = _royaltyPct;
+        proxyRegistryAddress = _proxyRegistryAddress;
+        preRevealURI = _preRevealURI;
+    }
 
     function withdraw() public onlyOwner {
         uint256 balance = address(this).balance;
@@ -262,7 +274,7 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
 contract OwnableDelegateProxy {}
 
 /**
- * @notice Used to delegate ownership of a contract to another address, 
+ * @notice Used to delegate ownership of a contract to another address,
  * to save on unneeded transactions to approve contract use for users
  */
 contract ProxyRegistry {
