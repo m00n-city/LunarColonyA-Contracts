@@ -258,16 +258,6 @@ describe("LCAlpha", function () {
     });
   });
 
-  describe("#setProvenanceHash", function () {
-    it("should be able to set provenanceHash", async function () {
-      const hash = "0x1234567";
-      await lcAlpha.setProvenanceHash(hash);
-      const provenanceHash = await lcAlpha.provenance();
-
-      expect(hash).to.be.equal(provenanceHash);
-    });
-  });
-
   describe("#walletOfOwner", function () {
     it("should return correct ids", async function () {
       await lcAlpha.setMerkleRoot(tree.getRoot());

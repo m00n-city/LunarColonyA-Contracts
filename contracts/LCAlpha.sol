@@ -70,7 +70,6 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
         Open
     }
 
-    string public provenance;
     uint256 public constant mintPrice = 0.08 ether;
     uint256 public constant bpMintPrice = 0.06 ether;
     uint256 public constant maxPurchase = 20 + 1;
@@ -116,13 +115,6 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
         }
     }
 
-    /**
-     * @notice Set provenance once it's calculated
-     */
-    function setProvenanceHash(string memory provenanceHash) public onlyOwner {
-        provenance = provenanceHash;
-    }
-
     function setBaseURI(string memory newBaseURI) public onlyOwner {
         baseURI = newBaseURI;
     }
@@ -138,10 +130,6 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
     function setRoyalties(address newRoyaltyAddr, uint256 newRoyaltyPct) public onlyOwner {
         royaltyAddr = newRoyaltyAddr;
         royaltyPct = newRoyaltyPct;
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
     }
 
     function setSaleState(SaleState newSaleState) public onlyOwner {
@@ -234,6 +222,10 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
         return super.isApprovedForAll(owner, operator);
     }
 
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
 
@@ -270,7 +262,8 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
 contract OwnableDelegateProxy {}
 
 /**
- * Used to delegate ownership of a contract to another address, to save on unneeded transactions to approve contract use for users
+ * @notice Used to delegate ownership of a contract to another address, 
+ * to save on unneeded transactions to approve contract use for users
  */
 contract ProxyRegistry {
     mapping(address => OwnableDelegateProxy) public proxies;
