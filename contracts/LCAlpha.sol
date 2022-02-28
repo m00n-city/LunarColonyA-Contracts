@@ -71,7 +71,7 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
     }
 
     string public provenance;
-    uint256 public mintPrice = 0.08 ether;
+    uint256 public constant mintPrice = 0.08 ether;
     uint256 public constant bpMintPrice = 0.06 ether;
     uint256 public constant maxPurchase = 20 + 1;
     uint256 public constant maxSupply = 10000 + 1;
@@ -129,10 +129,6 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
 
     function setPreRevealURI(string memory newPreRevealURI) public onlyOwner {
         preRevealURI = newPreRevealURI;
-    }
-
-    function setMintPrice(uint256 newMintPrice) public onlyOwner {
-        mintPrice = newMintPrice;
     }
 
     function setBeneficiary(address newBeneficiary) public onlyOwner {
