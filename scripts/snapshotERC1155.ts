@@ -2,7 +2,7 @@ import hre from "hardhat";
 import fs from "fs";
 import { Command, InvalidArgumentError } from "commander";
 import cliProgress from "cli-progress";
-import { Event } from "ethers";
+import { Event, EventFilter } from "ethers";
 import retry from "async-await-retry";
 import debug from "debug";
 
@@ -32,7 +32,7 @@ program
     "0x54E8E8338C475086912Bb1F112D8Ba72bB018D50"
   )
   .option("-s, --start-block <blockNumer>", "Start block", myParseInt, 22292323)
-  .option("-e, --end-block <blockNumer>", "End block", myParseInt, 25325091)
+  .option("-e, --end-block <blockNumer>", "End block", myParseInt, 25459450)
   .option("-l, --limit <blockCount>", "Limit", myParseInt, 1000);
 
 program.parse();
@@ -93,10 +93,15 @@ async function main() {
     const transferFilter = apollo2022.filters.TransferSingle();
 
     const toBlock = curBlock + limit;
-    const events = await apollo2022.queryFilter(
-      transferFilter,
-      curBlock,
-      toBlock
+    const events = await retry(
+      async (
+        transferFilter: EventFilter,
+        curBlock: number,
+        toBlock: number
+      ) => {
+        return await apollo2022.queryFilter(transferFilter, curBlock, toBlock);
+      },
+      [transferFilter, curBlock, toBlock]
     );
 
     for (const event of events) {
