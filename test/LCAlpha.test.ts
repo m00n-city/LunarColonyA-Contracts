@@ -255,6 +255,10 @@ describe("LCAlpha", function () {
       );
 
       expect(await lcAlpha.totalSupply()).to.be.equal(reservedTokens);
+
+      await expect(lcAlpha.reserveTokens(carol.address)).to.be.revertedWith(
+        "Reserves can't be taken"
+      );
     });
   });
 

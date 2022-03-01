@@ -76,6 +76,7 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
     uint256 public constant maxPurchase = 20 + 1;
     uint256 public constant maxSupply = 10000 + 1;
     uint256 public constant reservedTokens = 50;
+    bool private reservesTaken = false;
     bytes32 public merkleRoot;
     address public proxyRegistryAddress;
     string public baseURI;
@@ -123,9 +124,11 @@ contract LCAlpha is ERC721, IERC2981, Ownable {
      * @notice reserve for DAO
      */
     function reserveTokens(address to) public onlyOwner {
+        require(!reservesTaken, "Reserves can't be taken");
         for (uint256 i = 0; i < reservedTokens; i++) {
             _mintNext(to);
         }
+        reservesTaken = true;
     }
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
