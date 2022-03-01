@@ -102,7 +102,7 @@ task("setSaleState", "Set LCA contract sale state")
     console.log(tx);
   });
 
-task("setMerkleRoot", "Set LCA contract sale state")
+task("setMerkleRoot", "Set LCA boarding pass snapshot merkle root")
   .addParam("root", "Merkle root")
   .setAction(async function ({ root }, { ethers }) {
     const lcAlpha = await ethers.getContract("LCAlpha");
@@ -111,7 +111,7 @@ task("setMerkleRoot", "Set LCA contract sale state")
     console.log(tx);
   });
 
-task("reserveTokens", "Reserves tickets for giveaways")
+task("reserveTokens", "Reserves tokens for team")
   .addParam("address", "Receiver address")
   .setAction(async function ({ address }, { ethers }) {
     const lcAlpha = await ethers.getContract("LCAlpha");
@@ -124,13 +124,31 @@ task("reserveTokens", "Reserves tickets for giveaways")
     await tx.wait();
   });
 
-task("setRoyalties", "Set LCA contract sale state")
+task("setRoyalties", "Set royalties")
   .addParam("address", "Royalty address")
   .addParam("percent", "Royalty percent")
   .setAction(async function ({ address, percent }, { ethers }) {
     const lcAlpha = await ethers.getContract("LCAlpha");
 
     const tx = await lcAlpha.setRoyalties(address, percent);
+    console.log(tx);
+  });
+
+task("setProxyRegistryAddress", "Set Opensea proxy registry address")
+  .addParam("address", "Registry address")
+  .setAction(async function ({ address }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setProxyRegistryAddress(address);
+    console.log(tx);
+  });
+
+task("setPreRevealURI", "Set prereveal URI")
+  .addParam("uri", "New URI")
+  .setAction(async function ({ uri }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setPreRevealURI(uri);
     console.log(tx);
   });
 
