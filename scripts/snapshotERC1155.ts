@@ -1,8 +1,9 @@
 import hre from "hardhat";
 import fs from "fs";
-import { Command, Option, InvalidArgumentError } from "commander";
+import { Command, InvalidArgumentError } from "commander";
 import cliProgress from "cli-progress";
-import { BigNumber, Event } from "ethers";
+import { Event, EventFilter } from "ethers";
+import retry from "async-await-retry";
 import debug from "debug";
 
 const ethers = hre.ethers;
@@ -10,6 +11,7 @@ const log = {
   general: debug("snapshot"),
   blocks: debug("snapshot:blocks"),
   process: debug("snapshot:process"),
+  retry: debug("snapshot:retry"),
 };
 
 const program = new Command();
@@ -30,7 +32,7 @@ program
     "0x54E8E8338C475086912Bb1F112D8Ba72bB018D50"
   )
   .option("-s, --start-block <blockNumer>", "Start block", myParseInt, 22292323)
-  .option("-e, --end-block <blockNumer>", "End block", myParseInt, 24466492)
+  .option("-e, --end-block <blockNumer>", "End block", myParseInt, 25459450)
   .option("-l, --limit <blockCount>", "Limit", myParseInt, 1000);
 
 program.parse();
@@ -55,7 +57,7 @@ class BoardingPassOwners {
     "0x0000000000000000000000000000000000000000": { amount: 10000 },
   };
 
-  process(event: Event): void {
+  process = (event: Event): void => {
     const [from, to]: [string, string] = [event.args?.[1], event.args?.[2]];
     const value: number = event.args?.[4].toNumber();
 
@@ -69,7 +71,11 @@ class BoardingPassOwners {
     log.process(
       `${from} ${this.data[from].amount}, ${to} ${this.data[to].amount}, value: ${value}`
     );
-  }
+  };
+}
+
+function saveFile(file: string, data: PassOwners) {
+  fs.writeFileSync(file, JSON.stringify(data, undefined, 2));
 }
 
 async function main() {
@@ -87,24 +93,53 @@ async function main() {
     const transferFilter = apollo2022.filters.TransferSingle();
 
     const toBlock = curBlock + limit;
-    const events = await apollo2022.queryFilter(
-      transferFilter,
-      curBlock,
-      toBlock
+    const events = await retry(
+      async (
+        transferFilter: EventFilter,
+        curBlock: number,
+        toBlock: number
+      ) => {
+        return await apollo2022.queryFilter(transferFilter, curBlock, toBlock);
+      },
+      [transferFilter, curBlock, toBlock]
     );
 
     for (const event of events) {
-      owners.process(event);
+      retry(owners.process, [event], {
+        retriesMax: 10,
+        interval: 300,
+        onAttemptFail: (data: any) => {
+          log.retry("Error retrying", data);
+        },
+      });
     }
 
     log.blocks(`fromBlock: ${curBlock}, toBlock: ${toBlock}`);
     bar.increment(limit);
   }
 
-  fs.writeFileSync(
-    opts.contractAddress,
-    JSON.stringify(owners.data, undefined, 2)
-  );
+  let fileName = `${opts.contractAddress}_orig.json`;
+  log.general("Saving file", fileName);
+  saveFile(fileName, owners.data);
+
+  log.general("Prepare data for production usage");
+
+  const newOwnersData: PassOwners = {};
+
+  for (const [address, data] of Object.entries(owners.data)) {
+    if (data.amount > 0) {
+      const newData = { ...data };
+      // each pass gives 2 mints
+      newData.amount *= 2;
+      newOwnersData[address] = newData;
+    } else {
+      log.process("skip:", address, data.amount);
+    }
+  }
+  fileName = `${opts.contractAddress}.json`;
+
+  log.general("Saving file", fileName);
+  saveFile(fileName, newOwnersData);
 }
 
 main()

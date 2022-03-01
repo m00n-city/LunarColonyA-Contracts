@@ -4,119 +4,280 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+/*
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWNNNNXXXXXNNNNWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWXK0OkkxddlcccloddddxxkkO0KXNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMWNK0kdlc:::::cl:,'';looooooooooodxkOKXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMWX0kdoc;,'.......';cc:;:looooooooooooooodkOKNWMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMWXOdllol:'',,,........,looloooooooooooooodoodddxOKNMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMNKxl:,:lo:'':oo:'.......,looooooooodddddddddddddddddk0NWMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMN0xc;'.':oo:';lool,......,coddddddddddddddddddddddddddddx0XWMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMWKxc;'....;loolloooo:'...':lddddddddddddddddddddddddddddddddx0NMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMWXkl;'.......;loddddddol::codddddddddddddddddddddddddddddddddddxkKWMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMW0d:,..........';clloooolc:;:lddddddddddddddddddddddddxxxxxxxxxxxxx0NMMMMMMMMMMMMMMW
+WMMMMMMMMMMMNOo;'...............''',;'...,ldddddddddddddddxxxxxxxxxxxxxxxxxxxxxxxOXMMMMMMMMMMMMMW
+WMMMMMMMMMMNOl;'.................',co:.'coddddxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxOXWMMMMMMMMMMMW
+WMMMMMMMMMNOo;'.............';:clodxxdlodxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxOXMMMMMMMMMMMW
+WMMMMMMMMW0o;'............':odxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkkxxxxkkkONMMMMMMMMMMW
+WMMMMMMMMKx:'............,ldxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkkkkkkkkkkkkkkkkkk0WMMMMMMMMMW
+WMMMMMMMNOl,............'cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxkkxkkkkkkkkkkxxddoooooodxkkkkkOXMMMMMMMMMW
+WMMMMMMMKx:'...........'cdollllllllclllllodxxxxkkkkkkkkkkkkkkkkxdoc:,''........:xkkkkk0WMMMMMMMMW
+WMMMMMMW0o,............;ddc,'.............';coxkkkkkkkkkkkkkkxl;'..............'okkkkk0NMMMMMMMMW
+WMMMMMMNOl'............'cxxd:.................,cdkkkkkkkkkkkd,.................'oOkOOOOXMMMMMMMMW
+WMMMMMMXkc'.............';lxl'..................cxkkkkkkkkkkc..................;xOOOOOOXWMMMMMMMW
+WMMMMMMXkc'................:o:.................:dkkkkkkkxkOOxc'...............;dOOOOOOOXWMMMMMMMW
+WMMMMMMNkc'................,od:'............':okkkkxlc:;,lkOOkxl:,'........''cxOOOOOOOOXWMMMMMMMW
+WMMMMMMNOl'.................,lxdl::;;;;:::coxkOOOkd:......ckOOOOOkxxxxdxxxxkkOOOOOOOOO0XMMMMMMMMW
+WMMMMMMWKd,..................':xOOOkkkOOOkdloxOOOo;........ckOOOOOOOOOOOOOOOOOO0O000O0KNMMMMMMMMW
+WMMMMMMMXk:'..................,dOkxxxkOOOd,..;dkx;..........:xOOOOOOO00000O0000OOO0000XWMMMMMMMMW
+WMMMMMMMW0o,................';clc;,'',:okd;,,';oo'.....:,....cO00OOOO000OOkxolc:;;oO0KNMMMMMMMMMW
+WMMMMMMMMXkc'..............':c,.........;okkdc;,'.....cxo,,;lxO00Oc,;::;;,'.......;k0XWMMMMMMMMMW
+WMMMMMMMMWXx:'.............;l;...........'lkx;......'oO00OOO00000k;...............lOKWMMMMMMMMMMW
+WMMMMMMMMMWKd;.............';'............,x0kd:,,;;oO00000000000k;..............;kKNMMMMMMMMMMMW
+WMMMMMMMMMMWKd;...........................;k000x::coO000000000000x'.............,xKNMMMMMMMMMMMMW
+WMMMMMMMMMMMWKx:'...........':;'..........:k000OdlcoxxdollclxO00k:.............;xXWMMMMMMMMMMMMMW
+WMMMMMMMMMMMMWXOl,..........'oOdc,.........,:c::;;,,'........,::,.............cOXWMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMNKd:'........'o000ko,........................................,o0NWMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMWN0o;........,:lodl,......................................'lOXWMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMWX0o;'................................................'lOXWMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMWN0xc,............................................;o0NWMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMWWXOdc,......................................;lkXWWMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMWWX0xo:,'............................';cdOXWWMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWXKkdoc:,'................';:cok0XNWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWNXK0OkxxddddddddxxkOKXNWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWWWWWWWWWWWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+WMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW
+*/
+
+import "@openzeppelin/contracts-4.5/access/Ownable.sol";
+import "@openzeppelin/contracts-4.5/utils/Counters.sol";
+import "@openzeppelin/contracts-4.5/utils/cryptography/MerkleProof.sol";
+import "@openzeppelin/contracts-4.5/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-4.5/interfaces/IERC2981.sol";
+import "@openzeppelin/contracts-4.5/interfaces/IERC165.sol";
 
 /**
  * @title LunarColonyAlpha contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract LCAlpha is ERC721, ERC721Enumerable, Ownable {
+contract LCAlpha is ERC721, IERC2981, Ownable {
+    using Strings for uint256;
+
     enum SaleState {
         Paused,
-        Apollo2022,
+        BoardingPass,
         Open
     }
 
-    string public PROVENANCE;
-    uint256 public constant PRICE = 0.08 ether;
-    uint256 public constant MAX_PURCHASE = 20;
-    uint256 public constant MAX_SUPPLY = 10000;
-    uint256 public constant RESERVED_TOKENS = 100;
+    uint256 public constant mintPrice = 0.08 ether;
+    uint256 public constant bpMintPrice = 0.06 ether;
+    uint256 public constant maxPurchase = 20 + 1;
+    uint256 public constant maxSupply = 10000 + 1;
+    uint256 public constant reservedTokens = 50;
+    bytes32 public merkleRoot;
+    address public proxyRegistryAddress;
     string public baseURI;
-    SaleState saleState = SaleState.Paused;
+    string public preRevealURI;
 
-    constructor()
-        ERC721('Lunar Colony Alpha', 'LCA')
-        ERC721Enumerable()
-    {}
+    SaleState public saleState = SaleState.Paused;
+
+    uint256 public totalSupply;
+    mapping(address => uint256) public bpMintsPerAddr;
+
+    address public beneficiary;
+    address public royaltyAddr;
+    uint256 public royaltyPct;
+
+    modifier validateEthAmount(uint256 price, uint256 amount) {
+        require(price * amount == msg.value, "Incorrect ETH value sent");
+        _;
+    }
+
+    modifier saleIsActive(SaleState state) {
+        require(saleState == state, "Sale not active");
+        _;
+    }
+
+    constructor(
+        address _beneficiary,
+        address _royaltyAddr,
+        uint256 _royaltyPct,
+        address _proxyRegistryAddress,
+        string memory _preRevealURI
+    ) ERC721("Lunar Colony Alpha", "LCA") {
+        beneficiary = _beneficiary;
+        royaltyAddr = _royaltyAddr;
+        royaltyPct = _royaltyPct;
+        proxyRegistryAddress = _proxyRegistryAddress;
+        preRevealURI = _preRevealURI;
+    }
 
     function withdraw() public onlyOwner {
         uint256 balance = address(this).balance;
-        payable(msg.sender).transfer(balance);
+        payable(beneficiary).transfer(balance);
     }
 
     /**
-     * reserve for DAO
+     * @notice reserve for DAO
      */
-    function reserveTokens() public onlyOwner {
-        uint256 supply = totalSupply();
-        uint256 i;
-        for (i = 0; i < RESERVED_TOKENS; i++) {
-            _safeMint(msg.sender, supply + i);
+    function reserveTokens(address to) public onlyOwner {
+        for (uint256 i = 0; i < reservedTokens; i++) {
+            _mintNext(to);
         }
-    }
-
-    /*
-     * Set provenance once it's calculated
-     */
-    function setProvenanceHash(string memory provenanceHash) public onlyOwner {
-        PROVENANCE = provenanceHash;
     }
 
     function setBaseURI(string memory newBaseURI) public onlyOwner {
         baseURI = newBaseURI;
     }
 
-    function _baseURI() internal view override returns (string memory) {
-        return baseURI;
+    function setPreRevealURI(string memory newPreRevealURI) public onlyOwner {
+        preRevealURI = newPreRevealURI;
     }
 
-    function saleIsActive() public view returns (bool) {
-        return saleState != SaleState.Paused;
+    function setBeneficiary(address newBeneficiary) public onlyOwner {
+        beneficiary = newBeneficiary;
     }
 
-    /**
-     * @notice Set sale state
-     */
+    function setRoyalties(address newRoyaltyAddr, uint256 newRoyaltyPct) public onlyOwner {
+        royaltyAddr = newRoyaltyAddr;
+        royaltyPct = newRoyaltyPct;
+    }
+
     function setSaleState(SaleState newSaleState) public onlyOwner {
         saleState = newSaleState;
     }
 
-    /**
-     * Mint tokens
-     */
-    function mint(uint256 numberOfTokens) public payable {
-        require(saleIsActive(), "Sale must be active");
-        require(
-            numberOfTokens <= MAX_PURCHASE,
-            "Max purchase exceeded"
-        );
-        require(
-            totalSupply() + numberOfTokens <= MAX_SUPPLY,
-            "Purchase would exceed max supply"
-        );
-        require(
-            PRICE * numberOfTokens <= msg.value,
-            "Ether value sent is not correct"
-        );
+    function setMerkleRoot(bytes32 newMerkleRoot) external onlyOwner {
+        merkleRoot = newMerkleRoot;
+    }
 
-        for (uint256 i = 0; i < numberOfTokens; i++) {
-            uint256 mintIndex = totalSupply();
-            _safeMint(msg.sender, mintIndex);
+    function setProxyRegistryAddress(address newProxyRegistryAddress) external onlyOwner {
+        proxyRegistryAddress = newProxyRegistryAddress;
+    }
+
+    /**
+     * @notice Mint for boarding pass holders
+     */
+    function bpMint(
+        uint256 amount,
+        uint256 allowedAmount,
+        bytes32[] calldata proof
+    ) public payable saleIsActive(SaleState.BoardingPass) validateEthAmount(bpMintPrice, amount) {
+        require(
+            MerkleProof.verify(
+                proof,
+                merkleRoot,
+                keccak256(abi.encodePacked(msg.sender, allowedAmount))
+            ),
+            "Invalid Merkle Tree proof supplied"
+        );
+        require(bpMintsPerAddr[msg.sender] + amount <= allowedAmount, "Exceeds allowed amount");
+
+        bpMintsPerAddr[msg.sender] += amount;
+
+        for (uint256 i = 0; i < amount; i++) {
+            _mintNext(msg.sender);
         }
     }
 
-    /* */
+    /**
+     * @notice Public mint
+     */
+    function mint(uint256 amount)
+        public
+        payable
+        saleIsActive(SaleState.Open)
+        validateEthAmount(mintPrice, amount)
+    {
+        require(amount < maxPurchase, "Max purchase exceeded");
+        require(totalSupply + amount < maxSupply, "Purchase would exceed max supply");
+
+        for (uint256 i = 0; i < amount; i++) {
+            _mintNext(msg.sender);
+        }
+    }
+
+    function _mintNext(address to) private {
+        _mint(to, totalSupply);
+        unchecked {
+            totalSupply++;
+        }
+    }
+
+    function walletOfOwner(address ownerAddr) public view returns (uint256[] memory) {
+        uint256 balance = balanceOf(ownerAddr);
+        uint256[] memory tokens = new uint256[](balance);
+        uint256 tokenId;
+        uint256 found;
+
+        while (found < balance) {
+            if (_exists(tokenId) && ownerOf(tokenId) == ownerAddr) {
+                tokens[found++] = tokenId;
+            }
+            tokenId++;
+        }
+
+        return tokens;
+    }
+
+    /**
+     * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.
+     */
+    function isApprovedForAll(address owner, address operator) public view override returns (bool) {
+        // Whitelist OpenSea proxy contract for easy trading.
+        ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+        if (address(proxyRegistry.proxies(owner)) == operator) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
+        string memory __baseURI = _baseURI();
+        return
+            bytes(__baseURI).length > 0
+                ? string(abi.encodePacked(__baseURI, tokenId.toString()))
+                : preRevealURI;
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        virtual
-        override(ERC721, ERC721Enumerable)
+        override(ERC721, IERC165)
         returns (bool)
     {
-        return super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual override(ERC721, ERC721Enumerable) {
-        super._beforeTokenTransfer(from, to, tokenId);
+    /**
+     * @dev See IERC2981
+     */
+    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+        external
+        view
+        override
+        returns (address, uint256)
+    {
+        uint256 royaltyAmount = (salePrice / 100) * royaltyPct;
+        return (royaltyAddr, royaltyAmount);
     }
+}
+
+contract OwnableDelegateProxy {}
+
+/**
+ * @notice Used to delegate ownership of a contract to another address,
+ * to save on unneeded transactions to approve contract use for users
+ */
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
 }

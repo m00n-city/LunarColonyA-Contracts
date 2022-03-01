@@ -37,7 +37,13 @@ task("setupRelease", "Setups a new LCA Boarding Passes release")
     gasPrice = gasPrice.mul(2);
     console.log("gas price * 2", ethers.utils.formatUnits(gasPrice, "gwei"));
 
-    const options = { gasPrice };
+    // const gasLimit = await apollo2022.estimateGas.setupRelease(start, end, amount);
+    // console.log("gas limit", gasLimit.toString())
+
+    const options = {
+      gasPrice,
+    };
+
     const tx = await apollo2022.setupRelease(start, end, amount, options);
     console.log(tx);
 
@@ -85,6 +91,65 @@ task("sendERC20", "Sends ERC20 token to all unnamed accounts")
       console.log(`Sending ${amount} to ${account}`);
       await erc20.transfer(account, ethers.utils.parseEther(amount));
     }
+  });
+
+task("setSaleState", "Set LCA contract sale state")
+  .addParam("state", "Sale state")
+  .setAction(async function ({ state }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setSaleState(state);
+    console.log(tx);
+  });
+
+task("setMerkleRoot", "Set LCA boarding pass snapshot merkle root")
+  .addParam("root", "Merkle root")
+  .setAction(async function ({ root }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setMerkleRoot(root);
+    console.log(tx);
+  });
+
+task("reserveTokens", "Reserves tokens for team")
+  .addParam("address", "Receiver address")
+  .setAction(async function ({ address }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+    console.log(`LCAlpha.reserveTokens(
+      address=${address}
+    )`);
+    const tx = await lcAlpha.reserveTokens(address);
+    console.log(tx);
+
+    await tx.wait();
+  });
+
+task("setRoyalties", "Set royalties")
+  .addParam("address", "Royalty address")
+  .addParam("percent", "Royalty percent")
+  .setAction(async function ({ address, percent }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setRoyalties(address, percent);
+    console.log(tx);
+  });
+
+task("setProxyRegistryAddress", "Set Opensea proxy registry address")
+  .addParam("address", "Registry address")
+  .setAction(async function ({ address }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setProxyRegistryAddress(address);
+    console.log(tx);
+  });
+
+task("setPreRevealURI", "Set prereveal URI")
+  .addParam("uri", "New URI")
+  .setAction(async function ({ uri }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setPreRevealURI(uri);
+    console.log(tx);
   });
 
 const accounts = {
@@ -149,7 +214,7 @@ module.exports = {
       chainId: 42,
     },
     matic: {
-      url: `https://rpc-mainnet.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
+      url: `https://polygon-rpc.com/`,
       accounts,
       chainId: 137,
       tags: ["l2"],
@@ -187,7 +252,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.11",
+        version: "0.8.12",
         settings: {
           optimizer: {
             enabled: true,

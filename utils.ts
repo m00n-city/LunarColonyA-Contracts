@@ -1,7 +1,9 @@
 import { ParamType } from "@ethersproject/abi";
 import { BigNumberish, ContractFactory } from "ethers";
-import { HDNode } from "ethers/lib/utils";
+import { HDNode, keccak256 } from "ethers/lib/utils";
 import { ethers } from "hardhat";
+import MerkleTree from "merkletreejs";
+import fs from "fs";
 
 export async function increaseTime(seconds: number) {
   await ethers.provider.send("evm_increaseTime", [seconds]);
@@ -96,3 +98,55 @@ export function* hdNodeGen(
   }
   return count;
 }
+
+export type TreeData = {
+  [index: string]: { amount: number };
+};
+
+export class BpMerkleTree {
+  tree: MerkleTree;
+
+  constructor(data: TreeData) {
+    const leaves = Object.entries(data).map(([address, addrData]) => {
+      return BpMerkleTree.hashLeaf(address, addrData.amount);
+    });
+
+    this.tree = new MerkleTree(leaves, keccak256, {
+      sort: true,
+    });
+  }
+
+  getProof(address: string, allowance: number): string[] {
+    const leaf = BpMerkleTree.hashLeaf(address, allowance);
+    return this.tree.getHexProof(leaf);
+  }
+
+  getRoot(): string {
+    return this.tree.getHexRoot();
+  }
+
+  static hashLeaf(address: string, allowance: number): string {
+    return ethers.utils.solidityKeccak256(
+      ["address", "uint256"],
+      [address, allowance]
+    );
+  }
+
+  static fromFile(fileName: string): BpMerkleTree {
+    const data: TreeData = JSON.parse(fs.readFileSync(fileName, "utf-8"));
+
+    return new BpMerkleTree(data);
+  }
+
+  static fromObject(data: TreeData): BpMerkleTree {
+    return new BpMerkleTree(data);
+  }
+}
+
+export function range(start: number, stop: number, step: number = 1): number[] {
+  return Array.from(
+    { length: (stop - start) / step + 1 },
+    (_, i) => start + i * step
+  );
+}
+
