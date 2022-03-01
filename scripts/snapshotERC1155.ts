@@ -33,8 +33,7 @@ program
   )
   .option("-s, --start-block <blockNumer>", "Start block", myParseInt, 22292323)
   .option("-e, --end-block <blockNumer>", "End block", myParseInt, 25325091)
-  .option("-l, --limit <blockCount>", "Limit", myParseInt, 1000)
-  .option("-r, --remove-zero", "Remove zero amount entries");
+  .option("-l, --limit <blockCount>", "Limit", myParseInt, 1000);
 
 program.parse();
 const opts = program.opts();
@@ -114,25 +113,28 @@ async function main() {
     bar.increment(limit);
   }
 
-  const fileName = `${opts.contractAddress}.json`;
+  let fileName = `${opts.contractAddress}_orig.json`;
   log.general("Saving file", fileName);
   saveFile(fileName, owners.data);
 
-  if (opts.removeZero) {
-    log.general("Remove lines with zero amount");
+  log.general("Prepare data for production usage");
 
-    const newOwnersData: PassOwners = {};
+  const newOwnersData: PassOwners = {};
 
-    for (const [address, data] of Object.entries(owners.data)) {
-      if (data.amount > 0) {
-        newOwnersData[address] = data;
-      } else {
-        log.process("skip:", address, data.amount);
-      }
+  for (const [address, data] of Object.entries(owners.data)) {
+    if (data.amount > 0) {
+      const newData = { ...data };
+      // each pass gives 2 mints
+      newData.amount *= 2;
+      newOwnersData[address] = newData;
+    } else {
+      log.process("skip:", address, data.amount);
     }
-    const fileName = `${opts.contractAddress}_no0.json`;
-    saveFile(fileName, newOwnersData);
   }
+  fileName = `${opts.contractAddress}.json`;
+
+  log.general("Saving file", fileName);
+  saveFile(fileName, newOwnersData);
 }
 
 main()
