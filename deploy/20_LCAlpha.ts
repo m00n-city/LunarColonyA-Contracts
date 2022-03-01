@@ -26,10 +26,16 @@ const func: DeployFunction = async function ({
       deployer,
       5,
       "0xF57B2c51dED3A29e6891aba85459d600256Cf317",
-      "ipfs://QmY5DRuUTG5PbKjmiar6hJnFdKp6PmxvPMXfYEBweHGnDS",
+      "ipfs://Qmf7BxtDZyAWKwi6sHoLWFmjkLaHX8fDupJX9C7LA8K95v",
     ];
   } else if (network.tags.local) {
-    args = [deployer, deployer, 5, "0xF57B2c51dED3A29e6891aba85459d600256Cf317", ""]
+    args = [
+      deployer,
+      deployer,
+      5,
+      "0xF57B2c51dED3A29e6891aba85459d600256Cf317",
+      "ipfs://Qmf7BxtDZyAWKwi6sHoLWFmjkLaHX8fDupJX9C7LA8K95v",
+    ];
   } else {
     throw 'Invalid network'
   }
