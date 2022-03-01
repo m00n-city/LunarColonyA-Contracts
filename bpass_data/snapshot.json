@@ -6225,7 +6225,7 @@
     "amount": 2
   },
   "0x8d72C02Ab62B073ce3eb04e8BC6B01620db9F374": {
-    "amount": 2
+    "amount": 4
   },
   "0xE0f20120d3888b7E98C87F9Ae6b333b17adEDACb": {
     "amount": 2
@@ -6570,6 +6570,18 @@
     "amount": 4
   },
   "0x8b2E6e76a4B85eeff8B80b11FDB07C2AE6B246aE": {
+    "amount": 2
+  },
+  "0x1111C5fBDbD5E68cE5B5539B6Cd589884C404adB": {
+    "amount": 2
+  },
+  "0x334253B52B6d414184AAb218eFda325d89E795B3": {
+    "amount": 2
+  },
+  "0x9654eeBEE4b8AdA1e12f3Cc71A9FABD0deA5E75f": {
+    "amount": 2
+  },
+  "0xeA1d905441e6Bc791F8Ee9609B5DBdEd21ffFCf3": {
     "amount": 2
   }
 }
