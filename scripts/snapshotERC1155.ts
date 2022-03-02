@@ -105,13 +105,7 @@ async function main() {
     );
 
     for (const event of events) {
-      retry(owners.process, [event], {
-        retriesMax: 10,
-        interval: 300,
-        onAttemptFail: (data: any) => {
-          log.retry("Error retrying", data);
-        },
-      });
+      owners.process(event);
     }
 
     log.blocks(`fromBlock: ${curBlock}, toBlock: ${toBlock}`);

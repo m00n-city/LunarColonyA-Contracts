@@ -214,7 +214,7 @@ module.exports = {
       chainId: 42,
     },
     matic: {
-      url: `https://polygon-rpc.com/`,
+      url: `https://rpc-mainnet.maticvigil.com/v1/${process.env.MATICVIGIL_API_KEY}`,
       accounts,
       chainId: 137,
       tags: ["l2"],
