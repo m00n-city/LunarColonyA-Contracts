@@ -66,7 +66,9 @@ class BoardingPassOwners {
     if (!this.data[to]) {
       this.data[to] = { amount: 0 };
     }
-
+    // if (!this.data[from]) {
+    //   this.data[from] = { amount: 0 };
+    // }
     this.data[to].amount += value;
     this.data[from].amount -= value;
 
@@ -78,14 +80,17 @@ class BoardingPassOwners {
   process = (event: Event): void => {
     const eventLog = this.contract.interface.parseLog(event);
 
-    const [from, to]: [string, string] = [event.args?.[1], event.args?.[2]];
+    const [from, to]: [string, string] = [
+      eventLog.args?.[1],
+      eventLog.args?.[2],
+    ];
     if (eventLog.name === "TransferSingle") {
-      const value: number = event.args?.[4].toNumber();
+      const value: number = eventLog.args?.[4].toNumber();
       log.process("TransferSingle");
       this.addData(from, to, value);
     } else if (eventLog.name === "TransferBatch") {
       log.process("TransferBatch");
-      const value: number = event.args?.[4][0].toNumber();
+      const value: number = eventLog.args?.[4][0].toNumber();
       this.addData(from, to, value);
     } else {
       console.log("ERROR", event, eventLog);
@@ -130,7 +135,14 @@ async function main() {
       ) => {
         return await apollo2022.queryFilter(transferFilter, curBlock, toBlock);
       },
-      [transferFilter, curBlock, toBlock]
+      [transferFilter, curBlock, toBlock],
+      {
+        retriesMax: 10,
+        interval: 300,
+        onAttemptFail: (data: any) => {
+          console.log("Error retrying", data);
+        },
+      }
     );
 
     for (const event of events) {
