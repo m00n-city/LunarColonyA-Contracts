@@ -2,7 +2,7 @@ import hre from "hardhat";
 import fs from "fs";
 import { Command, InvalidArgumentError } from "commander";
 import cliProgress from "cli-progress";
-import { Event, EventFilter } from "ethers";
+import { Contract, Event, EventFilter } from "ethers";
 import retry from "async-await-retry";
 import debug from "debug";
 
@@ -56,11 +56,13 @@ class BoardingPassOwners {
   data: PassOwners = {
     "0x0000000000000000000000000000000000000000": { amount: 10000 },
   };
+  contract: Contract;
 
-  process = (event: Event): void => {
-    const [from, to]: [string, string] = [event.args?.[1], event.args?.[2]];
-    const value: number = event.args?.[4].toNumber();
+  constructor(contract: Contract) {
+    this.contract = contract;
+  }
 
+  addData = (from: string, to: string, value: number) => {
     if (!this.data[to]) {
       this.data[to] = { amount: 0 };
     }
@@ -71,6 +73,23 @@ class BoardingPassOwners {
     log.process(
       `${from} ${this.data[from].amount}, ${to} ${this.data[to].amount}, value: ${value}`
     );
+  };
+
+  process = (event: Event): void => {
+    const eventLog = this.contract.interface.parseLog(event);
+
+    const [from, to]: [string, string] = [event.args?.[1], event.args?.[2]];
+    if (eventLog.name === "TransferSingle") {
+      const value: number = event.args?.[4].toNumber();
+      log.process("TransferSingle");
+      this.addData(from, to, value);
+    } else if (eventLog.name === "TransferBatch") {
+      log.process("TransferBatch");
+      const value: number = event.args?.[4][0].toNumber();
+      this.addData(from, to, value);
+    } else {
+      console.log("ERROR", event, eventLog);
+    }
   };
 }
 
@@ -84,13 +103,23 @@ async function main() {
     opts.contractAddress
   );
   const supply = await apollo2022.totalTicketSupply();
-  const owners = new BoardingPassOwners();
+  const owners = new BoardingPassOwners(apollo2022);
 
   log.general(`Snapshot from ${startBlock} to ${endBlock}`);
 
   bar.start(endBlock - startBlock, 0);
   for (let curBlock = startBlock; curBlock < endBlock; curBlock += limit + 1) {
-    const transferFilter = apollo2022.filters.TransferSingle();
+    const transferSingleFilter = apollo2022.filters.TransferSingle();
+    const transferBatchFilter = apollo2022.filters.TransferBatch();
+
+    const transferFilter = {
+      address: apollo2022.address,
+      topics: [
+        transferSingleFilter.topics?.concat(transferBatchFilter.topics || []),
+      ],
+    };
+
+    // const transferFilter = transferSingleFilter;
 
     const toBlock = curBlock + limit;
     const events = await retry(
