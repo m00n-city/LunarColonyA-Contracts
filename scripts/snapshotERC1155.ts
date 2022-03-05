@@ -114,31 +114,25 @@ async function main() {
 
   bar.start(endBlock - startBlock, 0);
   for (let curBlock = startBlock; curBlock < endBlock; curBlock += limit + 1) {
-    const transferSingleFilter = apollo2022.filters.TransferSingle();
-    const transferBatchFilter = apollo2022.filters.TransferBatch();
+    const transferSingleFilter: any = apollo2022.filters.TransferSingle();
+    const transferBatchFilter: any = apollo2022.filters.TransferBatch();
 
     const transferFilter = {
       address: apollo2022.address,
-      topics: [
-        transferSingleFilter.topics?.concat(transferBatchFilter.topics || []),
-      ],
+      topics: [transferSingleFilter.topics.concat(transferBatchFilter.topics)],
     };
 
     // const transferFilter = transferSingleFilter;
 
     const toBlock = curBlock + limit;
     const events = await retry(
-      async (
-        transferFilter: EventFilter,
-        curBlock: number,
-        toBlock: number
-      ) => {
-        return await apollo2022.queryFilter(transferFilter, curBlock, toBlock);
+      (transferFilter: EventFilter, curBlock: number, toBlock: number) => {
+        return apollo2022.queryFilter(transferFilter, curBlock, toBlock);
       },
       [transferFilter, curBlock, toBlock],
       {
         retriesMax: 10,
-        interval: 300,
+        interval: 5000,
         onAttemptFail: (data: any) => {
           console.log("Error retrying", data);
         },
