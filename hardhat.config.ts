@@ -152,6 +152,16 @@ task("setPreRevealURI", "Set prereveal URI")
     console.log(tx);
   });
 
+
+task("setBeneficiary", "Set beneficiary address")
+  .addParam("address", "Beneficiary address")
+  .setAction(async function ({ address, percent }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    const tx = await lcAlpha.setBeneficiary(address);
+    console.log(tx);
+  });
+
 const accounts = {
   mnemonic: process.env.MNEMONIC,
 };
@@ -232,11 +242,17 @@ module.exports = {
       default: 0, // here this will by default take the first account as deployer
       // 1: 0, // similarly on mainnet it will take the first account as deployer. Note though that depending on how hardhat network are configured, the account 0 on one network can be different than on another
     },
-    // dao: {
-    //   default: 1, // here this will by default take the second account as team (so in the test this will be a different account than the deployer)
-    //   // 1: "", // on the mainnet the team could be a multi sig
-    //   // 4: "", // on rinkeby
-    // },
+    team: {
+      default: 1, // here this will by default take the second account as team (so in the test this will be a different account than the deployer)
+      // 1: "", // on the mainnet the team could be a multi sig
+      // 4: "", // on rinkeby
+    },
+    dao: {
+      default: 2,
+    },
+    rewardsFund: {
+      default: 3,
+    },
   },
 
   gasReporter: {
