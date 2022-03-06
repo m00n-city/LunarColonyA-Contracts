@@ -20,8 +20,8 @@ describe("Beneficiary", function () {
   });
 
   beforeEach(async function () {
-    await deployments.fixture(["LCAlpha"]);
-    // beneficiary = await ethers.getContract("Beneficiary");
+    await deployments.fixture(["Beneficiary", "LCAlpha"]);
+    beneficiary = await ethers.getContract("Beneficiary");
     lcAlpha = await ethers.getContract("LCAlpha");
   });
 
@@ -77,17 +77,6 @@ describe("Beneficiary", function () {
   });
 
   it("should be able to withdraw from LCA contract", async function () {
-    const cFactory = await ethers.getContractFactory("Beneficiary");
-    const wallets = [
-      Wallet.createRandom().connect(ethers.provider),
-      Wallet.createRandom().connect(ethers.provider),
-      Wallet.createRandom().connect(ethers.provider),
-      Wallet.createRandom().connect(ethers.provider),
-    ];
-    const addresses = wallets.map((x) => x.getAddress());
-
-    const beneficiary = await cFactory.deploy(addresses, [45, 30, 15, 10]);
-
     const mintPrice = parseEther("0.08");
     await lcAlpha.setSaleState(2);
 
@@ -100,5 +89,18 @@ describe("Beneficiary", function () {
     expect(await ethers.provider.getBalance(beneficiary.address)).to.be.equal(
       mintPrice
     );
+  });
+
+  it("only owner should be able to call setPayees", async function () {
+    await beneficiary.setPayees([deployer.address, team.address], [60, 40]);
+
+    expect(await beneficiary.shares(0)).to.be.equal(60);
+    expect(await beneficiary.shares(1)).to.be.equal(40);
+
+    await expect(
+      beneficiary
+        .connect(team)
+        .setPayees([deployer.address, team.address], [60, 40])
+    ).to.be.revertedWith("Ownable: caller is not the owner");
   });
 });

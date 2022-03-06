@@ -195,10 +195,10 @@ module.exports = {
       live: false,
       tags: ["local"],
       chainId: 1337,
-      mining: {
-        auto: false,
-        interval: [1000, 3000],
-      },
+      // mining: {
+      //   auto: false,
+      //   interval: [1000, 3000],
+      // },
     },
     ropsten: {
       url: `https://eth-ropsten.alchemyapi.io/v2/${process.env.ALCHEMY_API_KEY}`,
