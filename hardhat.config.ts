@@ -162,6 +162,19 @@ task("setBeneficiary", "Set beneficiary address")
     console.log(tx);
   });
 
+task("setBaseURI", "Sets new base uri")
+  .addParam("uri", "New URI")
+  .setAction(async function ({ uri }, { ethers }) {
+    const lcAlpha = await ethers.getContract("LCAlpha");
+
+    console.log(`lcAlpha.setBaseURI(
+      uri=${uri}
+    )`);
+
+    const tx = await lcAlpha.setBaseURI(uri);
+    console.log(tx);
+  });
+
 const accounts = {
   mnemonic: process.env.MNEMONIC,
 };
