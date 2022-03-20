@@ -175,6 +175,16 @@ task("setBaseURI", "Sets new base uri")
     console.log(tx);
   });
 
+task("withdraw", "Withdraw from LCA contract").setAction(async function (
+  _args,
+  { ethers }
+) {
+  const lcAlpha = await ethers.getContract("LCAlpha");
+
+  const tx = await lcAlpha.withdraw();
+  console.log(tx);
+});
+
 const accounts = {
   mnemonic: process.env.MNEMONIC,
 };
